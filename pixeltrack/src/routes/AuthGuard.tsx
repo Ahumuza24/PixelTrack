@@ -1,4 +1,4 @@
-import { Navigate, Outlet } from 'react-router-dom'
+import { Navigate, Outlet, useLocation } from 'react-router-dom'
 import { useAuth } from '@/features/auth/useAuth'
 import { ROUTES } from '@/lib/constants'
 
@@ -9,6 +9,7 @@ import { ROUTES } from '@/lib/constants'
  */
 export function AuthGuard() {
     const { user, loading } = useAuth()
+    const location = useLocation()
 
     if (loading) {
         return (
@@ -27,7 +28,8 @@ export function AuthGuard() {
     }
 
     if (!user) {
-        return <Navigate to={ROUTES.LOGIN} replace />
+        const from = `${location.pathname}${location.search}`
+        return <Navigate to={ROUTES.LOGIN} state={{ from }} replace />
     }
 
     return <Outlet />

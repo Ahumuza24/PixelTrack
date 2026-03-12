@@ -1,10 +1,20 @@
 import { describe, it, expect } from 'vitest'
 import { render, screen } from '@testing-library/react'
-import { MemoryRouter, Routes, Route } from 'react-router-dom'
+import { MemoryRouter, Routes, Route, useLocation } from 'react-router-dom'
 import { RoleGuard } from '@/routes/RoleGuard'
 import type { UserProfile } from '@/types'
 import { UserRole } from '@/types'
 import { AuthContext } from '@/features/auth/AuthContext'
+
+function LoginPageStub() {
+    const location = useLocation()
+    return (
+        <div>
+            Login Page
+            {location.state?.from && <span data-testid="redirect-from">{location.state.from}</span>}
+        </div>
+    )
+}
 
 function renderRoleGuard({
     user,
@@ -22,7 +32,7 @@ function renderRoleGuard({
                     <Route element={<RoleGuard allowedRoles={allowedRoles} />}>
                         <Route path="/restricted" element={<div>Restricted Content</div>} />
                     </Route>
-                    <Route path="/login" element={<div>Login Page</div>} />
+                    <Route path="/login" element={<LoginPageStub />} />
                 </Routes>
             </MemoryRouter>
         </AuthContext.Provider>,
@@ -44,9 +54,10 @@ describe('RoleGuard', () => {
         expect(screen.getByText('Restricted Content')).toBeInTheDocument()
     })
 
-    it('redirects to /login when user role does not match', () => {
+    it('redirects to /login when user role does not match and sets origin state', () => {
         renderRoleGuard({ user: makeUser(UserRole.EMPLOYEE), allowedRoles: [UserRole.ADMIN] })
         expect(screen.getByText('Login Page')).toBeInTheDocument()
+        expect(screen.getByTestId('redirect-from').textContent).toBe('/restricted')
         expect(screen.queryByText('Restricted Content')).not.toBeInTheDocument()
     })
 

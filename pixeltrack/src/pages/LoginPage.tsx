@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { Navigate, useLocation } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Eye, EyeOff, Mail, Lock, LogIn } from 'lucide-react'
@@ -9,21 +9,19 @@ import { loginSchema, type LoginFormValues } from '@/features/auth/schemas/login
 import { useAuth } from '@/features/auth/useAuth'
 import { ROLE_HOME } from '@/lib/constants'
 import { cn } from '@/lib/utils'
-import { UserRole } from '@/types'
 
 /**
  * Login page — the entry point for all unauthenticated users.
  * Implements email/password auth with React Hook Form + Zod validation.
  */
+type LoginLocationState = {
+    from?: string
+}
+
 export function LoginPage() {
-    const navigate = useNavigate()
+    const location = useLocation()
     const { user } = useAuth()
     const [showPassword, setShowPassword] = useState(false)
-
-    // Redirect already-authenticated users to their home
-    if (user) {
-        navigate(ROLE_HOME[user.role], { replace: true })
-    }
 
     const {
         register,
@@ -32,6 +30,13 @@ export function LoginPage() {
     } = useForm<LoginFormValues>({
         resolver: zodResolver(loginSchema),
     })
+
+    // Redirect already-authenticated users to their home
+    if (user) {
+        const state = location.state as LoginLocationState | null
+        const redirectTarget = state?.from ?? ROLE_HOME[user.role]
+        return <Navigate to={redirectTarget} replace />
+    }
 
     const onSubmit = async (data: LoginFormValues) => {
         try {
