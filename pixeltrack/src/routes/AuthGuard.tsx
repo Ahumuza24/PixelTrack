@@ -4,7 +4,7 @@ import { ROUTES } from '@/lib/constants'
 
 /**
  * Auth guard that protects routes from unauthenticated access.
- * Renders a full-page spinner while Firebase resolves its auth state.
+ * Renders a full-page spinner while Supabase resolves its auth state.
  * Redirects to /login if the user is not authenticated.
  */
 export function AuthGuard() {

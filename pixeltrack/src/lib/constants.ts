@@ -8,11 +8,13 @@ export const ROUTES = {
     CLIENT: '/client',
     ADMIN_CLIENTS: '/admin/clients',
     ADMIN_USERS: '/admin/users',
+    ADMIN_PROJECTS: '/admin/projects',
+    ADMIN_PROJECT_DETAIL: '/admin/projects/:projectId',
     ADMIN_TASKS: '/admin/tasks',
     ADMIN_REPORTS: '/admin/reports',
     TASK_DETAIL: '/tasks/:taskId',
     DESIGN_PREVIEW: '/tasks/:taskId/designs/:fileId',
-    ANALYTICS: '/analytics',
+    ANALYTICS: '/admin/analytics',
 } as const
 
 /** Routes accessible by each role after successful login */

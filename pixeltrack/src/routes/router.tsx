@@ -1,10 +1,18 @@
-import { createBrowserRouter, Navigate } from 'react-router-dom'
+import { createBrowserRouter, Navigate, Outlet } from 'react-router-dom'
 import { AuthGuard } from './AuthGuard'
 import { RoleGuard } from './RoleGuard'
+import { SidebarLayout } from '@/components/layout/SidebarLayout'
 import { LoginPage } from '@/pages/LoginPage'
 import { AdminDashboardPage } from '@/pages/AdminDashboardPage'
+import { ClientManagementPage } from '@/pages/ClientManagementPage'
+import { UserManagementPage } from '@/pages/UserManagementPage'
+import { ProjectManagementPage } from '@/pages/ProjectManagementPage'
+import { ProjectDetailPage } from '@/pages/ProjectDetailPage'
+import { TaskManagementPage } from '@/pages/TaskManagementPage'
+import { TaskDetailPage } from '@/pages/TaskDetailPage'
 import { EmployeeDashboardPage } from '@/pages/EmployeeDashboardPage'
 import { ClientDashboardPage } from '@/pages/ClientDashboardPage'
+import { AnalyticsPage } from '@/pages/AnalyticsPage'
 import { NotFoundPage } from '@/pages/NotFoundPage'
 import { ROUTES } from '@/lib/constants'
 import { UserRole } from '@/types'
@@ -29,11 +37,19 @@ export const router = createBrowserRouter([
             {
                 element: <RoleGuard allowedRoles={[UserRole.ADMIN]} />,
                 children: [
-                    { path: ROUTES.ADMIN, element: <AdminDashboardPage /> },
-                    { path: ROUTES.ADMIN_CLIENTS, element: <AdminDashboardPage /> },
-                    { path: ROUTES.ADMIN_USERS, element: <AdminDashboardPage /> },
-                    { path: ROUTES.ADMIN_TASKS, element: <AdminDashboardPage /> },
-                    { path: ROUTES.ADMIN_REPORTS, element: <AdminDashboardPage /> },
+                    {
+                        element: <SidebarLayout><Outlet /></SidebarLayout>,
+                        children: [
+                            { path: ROUTES.ADMIN, element: <AdminDashboardPage /> },
+                            { path: ROUTES.ADMIN_CLIENTS, element: <ClientManagementPage /> },
+                            { path: ROUTES.ADMIN_USERS, element: <UserManagementPage /> },
+                            { path: ROUTES.ADMIN_PROJECTS, element: <ProjectManagementPage /> },
+                            { path: ROUTES.ADMIN_PROJECT_DETAIL, element: <ProjectDetailPage /> },
+                            { path: ROUTES.ADMIN_TASKS, element: <TaskManagementPage /> },
+                            { path: ROUTES.ADMIN_REPORTS, element: <AdminDashboardPage /> },
+                            { path: ROUTES.ANALYTICS, element: <AnalyticsPage /> },
+                        ],
+                    },
                 ],
             },
 
@@ -57,9 +73,8 @@ export const router = createBrowserRouter([
             {
                 element: <RoleGuard allowedRoles={[UserRole.ADMIN, UserRole.EMPLOYEE, UserRole.CLIENT]} />,
                 children: [
-                    { path: ROUTES.TASK_DETAIL, element: <AdminDashboardPage /> },
+                    { path: ROUTES.TASK_DETAIL, element: <TaskDetailPage /> },
                     { path: ROUTES.DESIGN_PREVIEW, element: <AdminDashboardPage /> },
-                    { path: ROUTES.ANALYTICS, element: <AdminDashboardPage /> },
                 ],
             },
         ],

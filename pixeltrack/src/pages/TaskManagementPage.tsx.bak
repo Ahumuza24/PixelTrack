@@ -1,0 +1,675 @@
+import { useState, useMemo } from 'react'
+import { useNavigate } from 'react-router-dom'
+import {
+    CheckSquare, Search, Bell, Plus,
+    MoreHorizontal, Calendar, Flag, ChevronDown, ChevronLeft, ChevronRight,
+    LayoutGrid, List, Trash2, Edit2, Eye, CheckCircle, Clock, AlertCircle, X
+} from 'lucide-react'
+import { useAuth } from '@/features/auth/useAuth'
+import { useTasks, useCreateTask, useUpdateTask, useDeleteTask, useUpdateTaskStatus } from '@/features/tasks/hooks/useTasks'
+import { useProjects } from '@/features/projects/hooks/useProjects'
+import { useClients } from '@/features/clients'
+import { useUsers } from '@/features/users'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent } from '@/components/ui/card'
+import { Badge } from '@/components/ui/badge'
+import { Input } from '@/components/ui/input'
+import { Checkbox } from '@/components/ui/checkbox'
+import {
+    Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle,
+} from '@/components/ui/dialog'
+import {
+    AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+    AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from '@/components/ui/alert-dialog'
+import {
+    DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
+import { TaskForm } from '@/features/tasks/components/TaskForm'
+import type { TaskFormValues } from '@/features/tasks/schemas/taskSchema'
+import type { Task } from '@/types'
+import { TaskStatus, TaskPriority, UserRole } from '@/types'
+import type { User } from '@/types'
+
+type FilterTab = 'all' | 'my-tasks' | 'due-soon' | 'high-priority'
+type ViewMode = 'list' | 'kanban'
+
+const statusConfig: Record<TaskStatus, { label: string; bg: string; color: string; icon: typeof Clock }> = {
+    [TaskStatus.NOT_STARTED]: { label: 'To Do', bg: 'bg-slate-100', color: 'text-slate-600', icon: Clock },
+    [TaskStatus.IN_PROGRESS]: { label: 'In Progress', bg: 'bg-blue-100', color: 'text-blue-600', icon: Clock },
+    [TaskStatus.IN_REVIEW]: { label: 'Review', bg: 'bg-indigo-100', color: 'text-indigo-600', icon: Eye },
+    [TaskStatus.COMPLETE]: { label: 'Complete', bg: 'bg-green-100', color: 'text-green-600', icon: CheckCircle },
+    [TaskStatus.BLOCKED]: { label: 'Blocked', bg: 'bg-red-100', color: 'text-red-600', icon: AlertCircle },
+}
+
+const priorityConfig: Record<TaskPriority, { label: string; color: string; icon: typeof Flag }> = {
+    [TaskPriority.LOW]: { label: 'Low', color: 'text-slate-500', icon: Flag },
+    [TaskPriority.MEDIUM]: { label: 'Medium', color: 'text-blue-500', icon: Flag },
+    [TaskPriority.HIGH]: { label: 'High', color: 'text-orange-500', icon: Flag },
+    [TaskPriority.URGENT]: { label: 'Urgent', color: 'text-red-500', icon: Flag },
+}
+
+export function TaskManagementPage() {
+    const navigate = useNavigate()
+    const { user } = useAuth()
+    const { data: tasks, isLoading } = useTasks()
+    const { data: projects } = useProjects()
+    const { data: clients } = useClients()
+    const { data: users } = useUsers()
+    const createTask = useCreateTask()
+    const updateTask = useUpdateTask()
+    const deleteTask = useDeleteTask()
+    const updateTaskStatus = useUpdateTaskStatus()
+
+    const [viewMode, setViewMode] = useState<ViewMode>('list')
+    const [activeTab, setActiveTab] = useState<FilterTab>('all')
+    const [searchQuery, setSearchQuery] = useState('')
+    const [selectedTasks, setSelectedTasks] = useState<Set<string>>(new Set())
+    const [isFormOpen, setIsFormOpen] = useState(false)
+    const [editingTask, setEditingTask] = useState<Task | null>(null)
+    const [deletingTask, setDeletingTask] = useState<Task | null>(null)
+    const [currentPage, setCurrentPage] = useState(1)
+    const [projectFilter, setProjectFilter] = useState<string>('all')
+    const [assigneeFilter, setAssigneeFilter] = useState<string>('all')
+    const [statusFilter, setStatusFilter] = useState<string>('all')
+
+    const itemsPerPage = 10
+    const employees = users?.filter((u: User) => u.role !== UserRole.CLIENT) || []
+
+    const filteredTasks = useMemo(() => {
+        let result = tasks || []
+
+        if (activeTab === 'my-tasks') {
+            result = result.filter((t) => t.assignees.includes(user?.uid || ''))
+        } else if (activeTab === 'due-soon') {
+            const threeDaysFromNow = new Date()
+            threeDaysFromNow.setDate(threeDaysFromNow.getDate() + 3)
+            result = result.filter((t) => new Date(t.dueDate) <= threeDaysFromNow && t.status !== TaskStatus.COMPLETE)
+        } else if (activeTab === 'high-priority') {
+            result = result.filter((t) => t.priority === TaskPriority.HIGH || t.priority === TaskPriority.URGENT)
+        }
+
+        if (searchQuery) {
+            const q = searchQuery.toLowerCase()
+            result = result.filter((t) =>
+                t.title.toLowerCase().includes(q) || t.description.toLowerCase().includes(q)
+            )
+        }
+
+        if (projectFilter !== 'all') {
+            result = result.filter((t) => t.clientId === projectFilter)
+        }
+        if (assigneeFilter !== 'all') {
+            result = result.filter((t) => t.assignees.includes(assigneeFilter))
+        }
+        if (statusFilter !== 'all') {
+            result = result.filter((t) => t.status === statusFilter)
+        }
+
+        return result
+    }, [tasks, activeTab, searchQuery, projectFilter, assigneeFilter, statusFilter, user?.uid])
+
+    const totalPages = Math.ceil(filteredTasks.length / itemsPerPage)
+    const paginatedTasks = filteredTasks.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
+
+    const overdueCount = tasks?.filter((t) => {
+        const due = new Date(t.dueDate)
+        return due < new Date() && t.status !== TaskStatus.COMPLETE
+    }).length || 0
+
+    const toggleTaskSelection = (taskId: string) => {
+        const newSelected = new Set(selectedTasks)
+        if (newSelected.has(taskId)) {
+            newSelected.delete(taskId)
+        } else {
+            newSelected.add(taskId)
+        }
+        setSelectedTasks(newSelected)
+    }
+
+    const toggleAllSelection = () => {
+        if (selectedTasks.size === paginatedTasks.length) {
+            setSelectedTasks(new Set())
+        } else {
+            setSelectedTasks(new Set(paginatedTasks.map((t) => t.id)))
+        }
+    }
+
+    const handleAdd = () => {
+        setEditingTask(null)
+        setIsFormOpen(true)
+    }
+
+    const handleEdit = (task: Task) => {
+        setEditingTask(task)
+        setIsFormOpen(true)
+    }
+
+    const handleDelete = (task: Task) => {
+        setDeletingTask(task)
+    }
+
+    const handleStatusChange = (taskId: string, status: TaskStatus) => {
+        updateTaskStatus.mutate({ taskId, status })
+    }
+
+    const handleFormSubmit = async (data: TaskFormValues) => {
+        if (editingTask) {
+            await updateTask.mutateAsync({ id: editingTask.id, ...data })
+        } else {
+            await createTask.mutateAsync(data)
+        }
+        setIsFormOpen(false)
+        setEditingTask(null)
+    }
+
+    const handleConfirmDelete = async () => {
+        if (deletingTask) {
+            await deleteTask.mutateAsync(deletingTask.id)
+            setDeletingTask(null)
+        }
+    }
+
+    return (
+        <div className="flex-1 flex flex-col min-w-0 overflow-hidden bg-[#f5f7f8]">
+            {/* Header */}
+            <header className="h-16 border-b border-slate-200 bg-white/80 backdrop-blur-md px-6 flex items-center justify-between z-10">
+                <div className="flex items-center gap-4 flex-1 max-w-xl">
+                    <div className="relative w-full">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4" />
+                        <Input
+                            placeholder="Search tasks..."
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            className="w-full bg-slate-100 border-none pl-10 focus:ring-2 focus:ring-[#0048ad]/50"
+                        />
+                    </div>
+                </div>
+                <div className="flex items-center gap-3">
+                    <button className="h-9 w-9 flex items-center justify-center rounded-lg hover:bg-slate-100 text-slate-600 relative">
+                        <Bell className="w-5 h-5" />
+                        {overdueCount > 0 && (
+                            <span className="absolute top-0 right-0 h-4 w-4 bg-red-500 rounded-full text-[10px] text-white flex items-center justify-center">
+                                {overdueCount}
+                            </span>
+                        )}
+                    </button>
+                    <Button className="bg-[#0048ad] text-white hover:bg-[#003d8f]" onClick={handleAdd}>
+                        <Plus className="w-4 h-4 mr-2" />
+                        New Task
+                    </Button>
+                </div>
+            </header>
+
+            {/* Page Content */}
+            <div className="flex-1 overflow-y-auto p-6">
+                    {/* Page Header */}
+                    <div className="mb-6">
+                        <h1 className="text-2xl font-bold text-slate-900">Projects & Tasks</h1>
+                        <p className="text-slate-500">Manage all your agency projects and tasks in one place</p>
+                    </div>
+
+                    {/* Filter Tabs */}
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+                        <div className="flex gap-2">
+                            {[
+                                { id: 'all', label: 'All Tasks', count: tasks?.length || 0 },
+                                { id: 'my-tasks', label: 'My Tasks', count: tasks?.filter((t) => t.assignees.includes(user?.uid || '')).length || 0 },
+                                { id: 'due-soon', label: 'Due Soon', count: tasks?.filter((t) => {
+                                    const threeDays = new Date()
+                                    threeDays.setDate(threeDays.getDate() + 3)
+                                    return new Date(t.dueDate) <= threeDays && t.status !== TaskStatus.COMPLETE
+                                }).length || 0 },
+                                { id: 'high-priority', label: 'High Priority', count: tasks?.filter((t) => t.priority === TaskPriority.HIGH || t.priority === TaskPriority.URGENT).length || 0 },
+                            ].map((tab) => (
+                                <button
+                                    key={tab.id}
+                                    onClick={() => { setActiveTab(tab.id as FilterTab); setCurrentPage(1) }}
+                                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                                        activeTab === tab.id
+                                            ? 'bg-[#0048ad] text-white'
+                                            : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200'
+                                    }`}
+                                >
+                                    {tab.label}
+                                    <span className={`ml-2 px-2 py-0.5 rounded-full text-xs ${
+                                        activeTab === tab.id ? 'bg-white/20' : 'bg-slate-100'
+                                    }`}>
+                                        {tab.count}
+                                    </span>
+                                </button>
+                            ))}
+                        </div>
+
+                        <div className="flex items-center gap-3">
+                            <div className="flex bg-white rounded-lg border border-slate-200 p-1">
+                                <button
+                                    onClick={() => setViewMode('list')}
+                                    className={`px-3 py-1.5 rounded text-sm font-medium flex items-center gap-2 transition-colors ${
+                                        viewMode === 'list' ? 'bg-slate-100 text-slate-900' : 'text-slate-500 hover:text-slate-700'
+                                    }`}
+                                >
+                                    <List className="w-4 h-4" />
+                                    List
+                                </button>
+                                <button
+                                    onClick={() => setViewMode('kanban')}
+                                    className={`px-3 py-1.5 rounded text-sm font-medium flex items-center gap-2 transition-colors ${
+                                        viewMode === 'kanban' ? 'bg-slate-100 text-slate-900' : 'text-slate-500 hover:text-slate-700'
+                                    }`}
+                                >
+                                    <LayoutGrid className="w-4 h-4" />
+                                    Board
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Filters Row */}
+                    <div className="flex flex-wrap gap-3 mb-6">
+                        <div className="relative">
+                            <select
+                                value={projectFilter}
+                                onChange={(e) => setProjectFilter(e.target.value)}
+                                className="appearance-none bg-white border border-slate-200 rounded-lg px-4 py-2 pr-10 text-sm focus:outline-none focus:ring-2 focus:ring-[#0048ad]/50 cursor-pointer"
+                            >
+                                <option value="all">All Projects</option>
+                                {clients?.map((client) => (
+                                    <option key={client.id} value={client.id}>{client.name}</option>
+                                ))}
+                            </select>
+                            <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
+                        </div>
+
+                        <div className="relative">
+                            <select
+                                value={assigneeFilter}
+                                onChange={(e) => setAssigneeFilter(e.target.value)}
+                                className="appearance-none bg-white border border-slate-200 rounded-lg px-4 py-2 pr-10 text-sm focus:outline-none focus:ring-2 focus:ring-[#0048ad]/50 cursor-pointer"
+                            >
+                                <option value="all">All Assignees</option>
+                                {employees.map((emp) => (
+                                    <option key={emp.uid} value={emp.uid}>{emp.displayName}</option>
+                                ))}
+                            </select>
+                            <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
+                        </div>
+
+                        <div className="relative">
+                            <select
+                                value={statusFilter}
+                                onChange={(e) => setStatusFilter(e.target.value)}
+                                className="appearance-none bg-white border border-slate-200 rounded-lg px-4 py-2 pr-10 text-sm focus:outline-none focus:ring-2 focus:ring-[#0048ad]/50 cursor-pointer"
+                            >
+                                <option value="all">All Statuses</option>
+                                {Object.entries(statusConfig).map(([status, config]) => (
+                                    <option key={status} value={status}>{config.label}</option>
+                                ))}
+                            </select>
+                            <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
+                        </div>
+
+                        {(projectFilter !== 'all' || assigneeFilter !== 'all' || statusFilter !== 'all') && (
+                            <button
+                                onClick={() => { setProjectFilter('all'); setAssigneeFilter('all'); setStatusFilter('all') }}
+                                className="flex items-center gap-1 text-sm text-slate-500 hover:text-slate-700 px-3 py-2"
+                            >
+                                <X className="w-4 h-4" />
+                                Clear
+                            </button>
+                        )}
+                    </div>
+
+                    {/* Task Table (List View) */}
+                    {viewMode === 'list' ? (
+                        <Card className="border border-slate-200 overflow-hidden">
+                            <div className="overflow-x-auto">
+                                <table className="w-full">
+                                    <thead className="bg-slate-50 border-b border-slate-200">
+                                        <tr>
+                                            <th className="px-4 py-3 w-12">
+                                                <Checkbox
+                                                    checked={paginatedTasks.length > 0 && selectedTasks.size === paginatedTasks.length}
+                                                    onCheckedChange={toggleAllSelection}
+                                                />
+                                            </th>
+                                            <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700">Task Name</th>
+                                            <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700">Project</th>
+                                            <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700">Priority</th>
+                                            <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700">Assignee</th>
+                                            <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700">Due Date</th>
+                                            <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700">Status</th>
+                                            <th className="px-4 py-3 w-12"></th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-slate-200">
+                                        {isLoading ? (
+                                            Array.from({ length: 5 }).map((_, i) => (
+                                                <tr key={i} className="animate-pulse">
+                                                    <td className="px-4 py-4"><div className="h-4 w-4 bg-slate-200 rounded" /></td>
+                                                    <td className="px-4 py-4"><div className="h-4 w-32 bg-slate-200 rounded" /></td>
+                                                    <td className="px-4 py-4"><div className="h-4 w-24 bg-slate-200 rounded" /></td>
+                                                    <td className="px-4 py-4"><div className="h-4 w-16 bg-slate-200 rounded" /></td>
+                                                    <td className="px-4 py-4"><div className="h-4 w-20 bg-slate-200 rounded" /></td>
+                                                    <td className="px-4 py-4"><div className="h-4 w-20 bg-slate-200 rounded" /></td>
+                                                    <td className="px-4 py-4"><div className="h-6 w-20 bg-slate-200 rounded-full" /></td>
+                                                    <td className="px-4 py-4"><div className="h-8 w-8 bg-slate-200 rounded" /></td>
+                                                </tr>
+                                            ))
+                                        ) : paginatedTasks.length === 0 ? (
+                                            <tr>
+                                                <td colSpan={8} className="px-4 py-12 text-center">
+                                                    <CheckSquare className="w-12 h-12 text-slate-300 mx-auto mb-4" />
+                                                    <h3 className="text-lg font-medium text-slate-900 mb-2">No tasks found</h3>
+                                                    <p className="text-slate-500 mb-4">Get started by creating your first task</p>
+                                                    <Button onClick={handleAdd}>
+                                                        <Plus className="w-4 h-4 mr-2" />
+                                                        Create Task
+                                                    </Button>
+                                                </td>
+                                            </tr>
+                                        ) : (
+                                            paginatedTasks.map((task) => {
+                                                const status = statusConfig[task.status]
+                                                const priority = priorityConfig[task.priority]
+                                                const client = clients?.find((c) => c.id === task.clientId)
+                                                const project = projects?.find((p) => p.id === task.projectId)
+                                                const assignee = employees.find((e) => e.uid === task.assignees[0])
+                                                const isOverdue = new Date(task.dueDate) < new Date() && task.status !== TaskStatus.COMPLETE
+
+                                                return (
+                                                    <tr
+                                                        key={task.id}
+                                                        className="hover:bg-slate-50 transition-colors cursor-pointer"
+                                                        onClick={() => navigate(`/tasks/${task.id}`)}
+                                                    >
+                                                        <td className="px-4 py-4" onClick={(e) => e.stopPropagation()}>
+                                                            <Checkbox
+                                                                checked={selectedTasks.has(task.id)}
+                                                                onCheckedChange={() => toggleTaskSelection(task.id)}
+                                                            />
+                                                        </td>
+                                                        <td className="px-4 py-4">
+                                                            <div>
+                                                                <p className="font-medium text-slate-900">{task.title}</p>
+                                                                <p className="text-sm text-slate-500 line-clamp-1">{client?.name || 'Unknown'}</p>
+                                                            </div>
+                                                        </td>
+                                                        <td className="px-4 py-4">
+                                                            {project ? (
+                                                                <span className="text-sm font-medium text-cobalt">{project.title}</span>
+                                                            ) : (
+                                                                <span className="text-sm text-slate-400 italic">Standalone Task</span>
+                                                            )}
+                                                        </td>
+                                                        <td className="px-4 py-4">
+                                                            <div className={`flex items-center gap-1.5 ${priority.color}`}>
+                                                                <priority.icon className="w-4 h-4" />
+                                                                <span className="text-sm font-medium">{priority.label}</span>
+                                                            </div>
+                                                        </td>
+                                                        <td className="px-4 py-4">
+                                                            {assignee ? (
+                                                                <div className="flex items-center gap-2">
+                                                                    <div className="h-6 w-6 rounded-full bg-[#0048ad]/20 flex items-center justify-center text-[10px] text-[#0048ad] font-medium">
+                                                                        {assignee.displayName.charAt(0)}
+                                                                    </div>
+                                                                    <span className="text-sm text-slate-700">{assignee.displayName}</span>
+                                                                </div>
+                                                            ) : (
+                                                                <span className="text-sm text-slate-400">Unassigned</span>
+                                                            )}
+                                                        </td>
+                                                        <td className="px-4 py-4">
+                                                            <div className={`flex items-center gap-1.5 text-sm ${isOverdue ? 'text-red-600 font-medium' : 'text-slate-600'}`}>
+                                                                <Calendar className="w-4 h-4" />
+                                                                {new Date(task.dueDate).toLocaleDateString()}
+                                                                {isOverdue && <span className="text-xs bg-red-100 px-1.5 py-0.5 rounded">Overdue</span>}
+                                                            </div>
+                                                        </td>
+                                                        <td className="px-4 py-4">
+                                                            <DropdownMenu>
+                                                                <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
+                                                                    <button className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium ${status.bg} ${status.color}`}>
+                                                                        <status.icon className="w-3.5 h-3.5" />
+                                                                        {status.label}
+                                                                        <ChevronDown className="w-3 h-3" />
+                                                                    </button>
+                                                                </DropdownMenuTrigger>
+                                                                <DropdownMenuContent align="end">
+                                                                    {Object.entries(statusConfig).map(([s, c]) => (
+                                                                        <DropdownMenuItem
+                                                                            key={s}
+                                                                            onClick={(e) => {
+                                                                                e.stopPropagation()
+                                                                                handleStatusChange(task.id, s as TaskStatus)
+                                                                            }}
+                                                                        >
+                                                                            <c.icon className={`w-4 h-4 mr-2 ${c.color}`} />
+                                                                            {c.label}
+                                                                        </DropdownMenuItem>
+                                                                    ))}
+                                                                </DropdownMenuContent>
+                                                            </DropdownMenu>
+                                                        </td>
+                                                        <td className="px-4 py-4">
+                                                            <DropdownMenu>
+                                                                <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
+                                                                    <button className="h-8 w-8 flex items-center justify-center rounded-lg hover:bg-slate-200">
+                                                                        <MoreHorizontal className="w-4 h-4 text-slate-500" />
+                                                                    </button>
+                                                                </DropdownMenuTrigger>
+                                                                <DropdownMenuContent align="end">
+                                                                    <DropdownMenuItem onClick={(e) => { e.stopPropagation(); navigate(`/tasks/${task.id}`) }}>
+                                                                        <Eye className="w-4 h-4 mr-2" />
+                                                                        View Details
+                                                                    </DropdownMenuItem>
+                                                                    <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handleEdit(task) }}>
+                                                                        <Edit2 className="w-4 h-4 mr-2" />
+                                                                        Edit
+                                                                    </DropdownMenuItem>
+                                                                    <DropdownMenuItem
+                                                                        onClick={(e) => { e.stopPropagation(); handleDelete(task) }}
+                                                                        className="text-red-600 focus:text-red-600"
+                                                                    >
+                                                                        <Trash2 className="w-4 h-4 mr-2" />
+                                                                        Delete
+                                                                    </DropdownMenuItem>
+                                                                </DropdownMenuContent>
+                                                            </DropdownMenu>
+                                                        </td>
+                                                    </tr>
+                                                )
+                                            })
+                                        )}
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            {/* Pagination */}
+                            {filteredTasks.length > itemsPerPage && (
+                                <div className="flex items-center justify-between px-4 py-3 border-t border-slate-200">
+                                    <p className="text-sm text-slate-500">
+                                        Showing {(currentPage - 1) * itemsPerPage + 1} to {Math.min(currentPage * itemsPerPage, filteredTasks.length)} of {filteredTasks.length} tasks
+                                    </p>
+                                    <div className="flex items-center gap-2">
+                                        <button
+                                            onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                                            disabled={currentPage === 1}
+                                            className="p-2 rounded-lg hover:bg-slate-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                                        >
+                                            <ChevronLeft className="w-5 h-5" />
+                                        </button>
+                                        {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                                            <button
+                                                key={page}
+                                                onClick={() => setCurrentPage(page)}
+                                                className={`w-8 h-8 rounded-lg text-sm font-medium transition-colors ${
+                                                    currentPage === page
+                                                        ? 'bg-[#0048ad] text-white'
+                                                        : 'hover:bg-slate-100 text-slate-600'
+                                                }`}
+                                            >
+                                                {page}
+                                            </button>
+                                        ))}
+                                        <button
+                                            onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                                            disabled={currentPage === totalPages}
+                                            className="p-2 rounded-lg hover:bg-slate-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                                        >
+                                            <ChevronRight className="w-5 h-5" />
+                                        </button>
+                                    </div>
+                                </div>
+                            )}
+                        </Card>
+                    ) : (
+                        /* Kanban View */
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
+                            {Object.entries(statusConfig).map(([statusKey, statusInfo]) => {
+                                const columnTasks = filteredTasks.filter((t) => t.status === statusKey)
+                                return (
+                                    <div key={statusKey} className="bg-slate-100 rounded-xl p-4">
+                                        <div className="flex items-center justify-between mb-4">
+                                            <div className="flex items-center gap-2">
+                                                <div className={`p-1.5 rounded-lg ${statusInfo.bg}`}>
+                                                    <statusInfo.icon className={`w-4 h-4 ${statusInfo.color}`} />
+                                                </div>
+                                                <h3 className="font-semibold text-slate-700">{statusInfo.label}</h3>
+                                            </div>
+                                            <Badge variant="secondary">{columnTasks.length}</Badge>
+                                        </div>
+                                        <div className="space-y-3">
+                                            {columnTasks.map((task) => {
+                                                const priority = priorityConfig[task.priority]
+                                                const client = clients?.find((c) => c.id === task.clientId)
+                                                const isOverdue = new Date(task.dueDate) < new Date() && task.status !== TaskStatus.COMPLETE
+
+                                                return (
+                                                    <Card
+                                                        key={task.id}
+                                                        className="cursor-pointer hover:shadow-md transition-shadow group"
+                                                        onClick={() => navigate(`/tasks/${task.id}`)}
+                                                    >
+                                                        <CardContent className="p-4">
+                                                            <div className="flex items-start justify-between mb-2">
+                                                                <Badge className={`${priority.color} bg-transparent p-0 hover:bg-transparent`}>
+                                                                    <priority.icon className="w-3 h-3 mr-1" />
+                                                                    {priority.label}
+                                                                </Badge>
+                                                                <DropdownMenu>
+                                                                    <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
+                                                                        <button className="opacity-0 group-hover:opacity-100 h-6 w-6 flex items-center justify-center rounded hover:bg-slate-100">
+                                                                            <MoreHorizontal className="w-4 h-4 text-slate-400" />
+                                                                        </button>
+                                                                    </DropdownMenuTrigger>
+                                                                    <DropdownMenuContent align="end">
+                                                                        <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handleEdit(task) }}>
+                                                                            <Edit2 className="w-4 h-4 mr-2" />
+                                                                            Edit
+                                                                        </DropdownMenuItem>
+                                                                        <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handleDelete(task) }} className="text-red-600">
+                                                                            <Trash2 className="w-4 h-4 mr-2" />
+                                                                            Delete
+                                                                        </DropdownMenuItem>
+                                                                    </DropdownMenuContent>
+                                                                </DropdownMenu>
+                                                            </div>
+                                                            <h4 className="font-medium text-slate-900 mb-1 line-clamp-2">{task.title}</h4>
+                                                            <p className="text-xs text-slate-500 mb-3">{client?.name || 'Unknown'}</p>
+                                                            <div className="flex items-center justify-between text-xs">
+                                                                <div className={`flex items-center gap-1 ${isOverdue ? 'text-red-600' : 'text-slate-500'}`}>
+                                                                    <Calendar className="w-3 h-3" />
+                                                                    {new Date(task.dueDate).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
+                                                                </div>
+                                                                {task.assignees.length > 0 && (
+                                                                    <div className="flex -space-x-1">
+                                                                        {task.assignees.slice(0, 3).map((assigneeId) => {
+                                                                            const assignee = employees.find((e) => e.uid === assigneeId)
+                                                                            return (
+                                                                                <div
+                                                                                    key={assigneeId}
+                                                                                    className="h-5 w-5 rounded-full bg-[#0048ad]/20 flex items-center justify-center text-[9px] text-[#0048ad] font-medium border border-white"
+                                                                                    title={assignee?.displayName}
+                                                                                >
+                                                                                    {assignee?.displayName?.charAt(0) || 'A'}
+                                                                                </div>
+                                                                            )
+                                                                        })}
+                                                                        {task.assignees.length > 3 && (
+                                                                            <div className="h-5 w-5 rounded-full bg-slate-200 flex items-center justify-center text-[9px] text-slate-600 border border-white">
+                                                                                +{task.assignees.length - 3}
+                                                                            </div>
+                                                                        )}
+                                                                    </div>
+                                                                )}
+                                                            </div>
+                                                        </CardContent>
+                                                    </Card>
+                                                )
+                                            })}
+                                            {columnTasks.length === 0 && (
+                                                <div className="text-center py-8 text-slate-400 text-sm">
+                                                    No tasks
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                )
+                            })}
+                        </div>
+                    )}
+                </div>
+            </div>
+
+            {/* Add/Edit Dialog */}
+            {isFormOpen && (
+                <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
+                    <DialogContent className="sm:max-w-lg">
+                        <DialogHeader>
+                            <DialogTitle>
+                                {editingTask ? 'Edit Task' : 'Create New Task'}
+                            </DialogTitle>
+                            <DialogDescription>
+                                {editingTask ? 'Update the task details below.' : 'Enter the details for the new task.'}
+                            </DialogDescription>
+                        </DialogHeader>
+                        <TaskForm
+                            task={editingTask ?? undefined}
+                            clients={clients ?? []}
+                            projects={projects ?? []}
+                            employees={employees}
+                            onSubmit={handleFormSubmit}
+                            onCancel={() => setIsFormOpen(false)}
+                            isSubmitting={createTask.isPending || updateTask.isPending}
+                        />
+                    </DialogContent>
+                </Dialog>
+            )}
+
+            {/* Delete Confirmation */}
+            <AlertDialog open={!!deletingTask} onOpenChange={() => setDeletingTask(null)}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Delete Task</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            Are you sure you want to delete <strong>{deletingTask?.title}</strong>?
+                            This action cannot be undone.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction
+                            onClick={handleConfirmDelete}
+                            className="bg-red-600 hover:bg-red-700"
+                            disabled={deleteTask.isPending}
+                        >
+                            {deleteTask.isPending ? 'Deleting...' : 'Delete'}
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
+        </div>
+    )
+}

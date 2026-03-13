@@ -1,13 +1,13 @@
-import { createContext, useContext, useEffect, useState, type ReactNode } from 'react'
-import type { User } from 'firebase/auth'
-import { onAuthChange } from '@/lib/firebase/auth'
-import { getUserProfile, createUserProfile } from '@/lib/firebase/users'
+import { createContext, useEffect, useState, type ReactNode } from 'react'
+import type { User } from '@supabase/supabase-js'
+import { onAuthChange } from '@/lib/supabase/auth'
+import { getUserProfile, createUserProfile } from '@/lib/supabase/users'
 import type { UserProfile } from '@/types'
 import { UserRole } from '@/types'
 
-interface AuthContextValue {
+export interface AuthContextValue {
     user: UserProfile | null
-    firebaseUser: User | null
+    supabaseUser: User | null
     loading: boolean
 }
 
@@ -19,35 +19,35 @@ interface AuthProviderProps {
 
 /**
  * Provides authentication state to the entire application.
- * Subscribes to Firebase Auth state, loads the Firestore user profile,
+ * Subscribes to Supabase Auth state, loads the user profile,
  * and creates a profile document on first login.
  */
 export function AuthProvider({ children }: AuthProviderProps) {
     const [user, setUser] = useState<UserProfile | null>(null)
-    const [firebaseUser, setFirebaseUser] = useState<User | null>(null)
+    const [supabaseUser, setSupabaseUser] = useState<User | null>(null)
     const [loading, setLoading] = useState(true)
 
     useEffect(() => {
-        const unsubscribe = onAuthChange(async (fbUser) => {
-            setFirebaseUser(fbUser)
+        const unsubscribe = onAuthChange(async (sbUser) => {
+            setSupabaseUser(sbUser)
 
-            if (!fbUser) {
+            if (!sbUser) {
                 setUser(null)
                 setLoading(false)
                 return
             }
 
             try {
-                let profile = await getUserProfile(fbUser.uid)
+                let profile = await getUserProfile(sbUser.id)
 
                 // First login — create a profile with default employee role
                 if (!profile) {
-                    await createUserProfile(fbUser.uid, {
-                        email: fbUser.email ?? '',
-                        displayName: fbUser.displayName ?? fbUser.email ?? 'Unknown',
+                    await createUserProfile(sbUser.id, {
+                        email: sbUser.email ?? '',
+                        displayName: sbUser.user_metadata?.display_name ?? sbUser.email ?? 'Unknown',
                         role: UserRole.EMPLOYEE,
                     })
-                    profile = await getUserProfile(fbUser.uid)
+                    profile = await getUserProfile(sbUser.id)
                 }
 
                 setUser(profile)
@@ -63,7 +63,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     }, [])
 
     return (
-        <AuthContext.Provider value={{ user, firebaseUser, loading }}>
+        <AuthContext.Provider value={{ user, supabaseUser, loading }}>
             {children}
         </AuthContext.Provider>
     )

@@ -5,6 +5,8 @@ import { RoleGuard } from '@/routes/RoleGuard'
 import type { UserProfile } from '@/types'
 import { UserRole } from '@/types'
 import { AuthContext } from '@/features/auth/AuthContext'
+import type { AuthContextValue } from '@/features/auth/AuthContext'
+import type { User } from 'firebase/auth'
 
 function LoginPageStub() {
     const location = useLocation()
@@ -23,7 +25,7 @@ function renderRoleGuard({
     user: UserProfile | null
     allowedRoles: UserRole[]
 }) {
-    const contextValue = { user, firebaseUser: null, loading: false }
+    const contextValue: AuthContextValue = { user, firebaseUser: null as User | null, loading: false }
 
     return render(
         <AuthContext.Provider value={contextValue}>

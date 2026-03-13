@@ -1,0 +1,5 @@
+export { ClientForm } from './components/ClientForm'
+export { ClientList } from './components/ClientList'
+export { useClients, useClient, useCreateClient, useUpdateClient, useDeleteClient } from './hooks/useClients'
+export { clientSchema, defaultClientValues } from './schemas/clientSchema'
+export type { ClientFormValues } from './schemas/clientSchema'
