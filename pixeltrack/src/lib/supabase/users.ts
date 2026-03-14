@@ -25,6 +25,7 @@ export async function getUserProfile(uid: string): Promise<UserProfile | null> {
         email: profile.email,
         displayName: profile.display_name,
         role: profile.role as UserRole,
+        clientId: profile.client_id ?? undefined,
         photoURL: profile.photo_url,
         createdAt: profile.created_at,
         updatedAt: profile.updated_at,
@@ -33,13 +34,13 @@ export async function getUserProfile(uid: string): Promise<UserProfile | null> {
 
 /**
  * Creates or updates a user profile in the database.
- * Uses the current timestamp for consistency.
+ * Role is always set to employee from the client.
  * @param uid - The user's UUID (from auth.users)
- * @param data - Partial profile data to merge with defaults
+ * @param data - Profile fields to persist
  */
 export async function createUserProfile(
     uid: string,
-    data: Omit<UserProfile, 'uid' | 'createdAt' | 'updatedAt'>,
+    data: Pick<UserProfile, 'email' | 'displayName' | 'photoURL'>,
 ): Promise<void> {
     const { error } = await supabase
         .from('profiles')
@@ -47,7 +48,7 @@ export async function createUserProfile(
             id: uid,
             email: data.email,
             display_name: data.displayName,
-            role: data.role ?? UserRole.EMPLOYEE,
+            role: UserRole.EMPLOYEE,
             photo_url: data.photoURL,
         }, { onConflict: 'id' })
 
@@ -61,12 +62,11 @@ export async function createUserProfile(
  */
 export async function updateUserProfile(
     uid: string,
-    data: Partial<Omit<UserProfile, 'uid' | 'createdAt' | 'updatedAt'>>,
+    data: Partial<Pick<UserProfile, 'email' | 'displayName' | 'photoURL'>>,
 ): Promise<void> {
     const updateData: Record<string, unknown> = {}
     if (data.email) updateData.email = data.email
     if (data.displayName !== undefined) updateData.display_name = data.displayName
-    if (data.role) updateData.role = data.role
     if (data.photoURL !== undefined) updateData.photo_url = data.photoURL
 
     const { error } = await supabase
@@ -95,6 +95,7 @@ export async function getAllUserProfiles(): Promise<UserProfile[]> {
         email: profile.email,
         displayName: profile.display_name,
         role: profile.role as UserRole,
+        clientId: profile.client_id ?? undefined,
         photoURL: profile.photo_url,
         createdAt: profile.created_at,
         updatedAt: profile.updated_at,
@@ -121,6 +122,7 @@ export async function getUserProfilesByRole(role: UserRole): Promise<UserProfile
         email: profile.email,
         displayName: profile.display_name,
         role: profile.role as UserRole,
+        clientId: profile.client_id ?? undefined,
         photoURL: profile.photo_url,
         createdAt: profile.created_at,
         updatedAt: profile.updated_at,

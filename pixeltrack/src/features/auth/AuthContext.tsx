@@ -3,7 +3,6 @@ import type { User } from '@supabase/supabase-js'
 import { onAuthChange } from '@/lib/supabase/auth'
 import { getUserProfile, createUserProfile } from '@/lib/supabase/users'
 import type { UserProfile } from '@/types'
-import { UserRole } from '@/types'
 
 export interface AuthContextValue {
     user: UserProfile | null
@@ -45,7 +44,6 @@ export function AuthProvider({ children }: AuthProviderProps) {
                     await createUserProfile(sbUser.id, {
                         email: sbUser.email ?? '',
                         displayName: sbUser.user_metadata?.display_name ?? sbUser.email ?? 'Unknown',
-                        role: UserRole.EMPLOYEE,
                     })
                     profile = await getUserProfile(sbUser.id)
                 }

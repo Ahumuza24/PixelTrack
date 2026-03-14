@@ -33,6 +33,8 @@ interface ClientListProps {
     onAdd: () => void
     /** Optional error state */
     error?: Error | null
+    /** Optional retry handler */
+    onRetry?: () => void
 }
 
 /**
@@ -62,6 +64,7 @@ export function ClientList({
     onDelete,
     onAdd,
     error = null,
+    onRetry,
 }: ClientListProps) {
     const [searchQuery, setSearchQuery] = useState('')
     const [statusFilter, setStatusFilter] = useState<ClientStatus | null>(null)
@@ -99,9 +102,11 @@ export function ClientList({
                 </div>
                 <h3 className="text-lg font-semibold text-slate-900">Failed to load clients</h3>
                 <p className="text-sm text-slate-500 mt-1 max-w-md">{error.message}</p>
-                <Button variant="outline" className="mt-4" onClick={() => window.location.reload()}>
-                    Retry
-                </Button>
+                {onRetry && (
+                    <Button variant="outline" className="mt-4" onClick={onRetry}>
+                        Retry
+                    </Button>
+                )}
             </div>
         )
     }

@@ -1,6 +1,5 @@
-import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { CheckSquare, Users, FileText, Plus, Loader2, CheckCircle, Building2, AlertCircle, ArrowRight, Search, Bell, MessageSquare, Upload, List, Eye, Folder } from 'lucide-react'
+import { CheckSquare, Users, Plus, Loader2, CheckCircle, Building2, AlertCircle, ArrowRight, Search, Bell, MessageSquare, Upload, List, Eye, Folder } from 'lucide-react'
 import { useAuth } from '@/features/auth/useAuth'
 import { useTasks } from '@/features/tasks/hooks/useTasks'
 import { useClients } from '@/features/clients'
@@ -10,6 +9,17 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
 import { TaskStatus, UserRole } from '@/types'
+
+/**
+ * Generates a stable progress percentage for display-only UI.
+ */
+function getProgressFromSeed(seed: string) {
+    let hash = 0
+    for (let i = 0; i < seed.length; i += 1) {
+        hash = (hash * 31 + seed.charCodeAt(i)) % 1000
+    }
+    return 60 + (hash % 41)
+}
 
 export function AdminDashboardPage() {
     const navigate = useNavigate()
@@ -68,7 +78,7 @@ export function AdminDashboardPage() {
                             </span>
                         )}
                     </button>
-                    <Button className="bg-[#0048ad] text-white hover:bg-[#003d8f]" onClick={() => navigate('/admin/tasks')}>
+                    <Button className="bg-[#0048ad] text-white hover:bg-[#003d8f]" onClick={() => navigate('/admin/projects')}>
                         <Plus className="w-4 h-4 mr-2" />
                         New Project
                     </Button>
@@ -203,7 +213,7 @@ export function AdminDashboardPage() {
                                         { bg: 'bg-sky-100', color: 'text-sky-600' },
                                     ]
                                     const iconStyle = iconStyles[task.title.length % 3]
-                                    const progress = Math.floor(Math.random() * 40) + 60
+                                    const progress = getProgressFromSeed(task.id)
                                     const isOnTrack = progress > 60
 
                                     return (

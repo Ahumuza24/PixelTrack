@@ -1,5 +1,4 @@
-import { useMemo, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useMemo } from 'react'
 import { CheckSquare, Users, Building2, TrendingUp, AlertCircle, Download, Bell, Loader2 } from 'lucide-react'
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -17,15 +16,7 @@ const statusConfig: Record<TaskStatus, { label: string; bg: string; color: strin
     [TaskStatus.BLOCKED]: { label: 'Blocked', bg: 'bg-red-100', color: 'text-red-600' },
 }
 
-const priorityConfig: Record<TaskPriority, { label: string; color: string }> = {
-    [TaskPriority.LOW]: { label: 'Low', color: 'text-slate-500' },
-    [TaskPriority.MEDIUM]: { label: 'Medium', color: 'text-blue-500' },
-    [TaskPriority.HIGH]: { label: 'High', color: 'text-orange-500' },
-    [TaskPriority.URGENT]: { label: 'Urgent', color: 'text-red-500' },
-}
-
 export function AnalyticsPage() {
-    const navigate = useNavigate()
     const { data: tasks, isLoading: tasksLoading } = useTasks()
     const { data: clients, isLoading: clientsLoading } = useClients()
     const { data: users, isLoading: usersLoading } = useUsers()

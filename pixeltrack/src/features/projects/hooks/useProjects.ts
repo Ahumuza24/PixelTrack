@@ -9,30 +9,9 @@ import {
     deleteProject,
     getProjectTaskCounts,
 } from '@/lib/supabase/projects'
-import type { Project, CreateProjectInput, UpdateProjectInput, ProjectFilters, ProjectWithClientAndAnalytics } from '@/types'
+import type { ProjectFilters } from '@/types'
 
 const PROJECTS_QUERY_KEY = 'projects'
-
-/**
- * Calculates project progress based on task counts.
- */
-async function enrichProjectsWithAnalytics(projects: Project[]): Promise<ProjectWithClientAndAnalytics[]> {
-    const enriched = await Promise.all(
-        projects.map(async (project) => {
-            const { total, completed } = await getProjectTaskCounts(project.id)
-            const progress = total > 0 ? Math.round((completed / total) * 100) : 0
-
-            return {
-                ...project,
-                clientName: '', // Will be populated by getProjectsWithClient
-                totalTasks: total,
-                completedTasks: completed,
-                progress,
-            }
-        })
-    )
-    return enriched
-}
 
 /**
  * Hook to fetch all projects.

@@ -36,7 +36,7 @@ import type { ClientFormValues } from '@/features/clients/schemas/clientSchema'
  * Access: Admin only (protected by RoleGuard)
  */
 export function ClientManagementPage() {
-    const { data: clients, isLoading, error } = useClients()
+    const { data: clients, isLoading, error, refetch } = useClients()
     const createClient = useCreateClient()
     const updateClient = useUpdateClient()
     const deleteClient = useDeleteClient()
@@ -115,6 +115,7 @@ export function ClientManagementPage() {
                         clients={clients ?? []}
                         isLoading={isLoading}
                         error={error}
+                        onRetry={refetch}
                         onEdit={handleEdit}
                         onDelete={handleDelete}
                         onAdd={handleAdd}

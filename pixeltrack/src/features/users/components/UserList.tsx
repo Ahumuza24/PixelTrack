@@ -35,6 +35,8 @@ interface UserListProps {
     clients?: Client[]
     /** Optional error state */
     error?: Error | null
+    /** Optional retry handler */
+    onRetry?: () => void
 }
 
 /**
@@ -66,6 +68,7 @@ export function UserList({
     onAdd,
     clients = [],
     error = null,
+    onRetry,
 }: UserListProps) {
     const [searchQuery, setSearchQuery] = useState('')
     const [roleFilter, setRoleFilter] = useState<UserRole | null>(null)
@@ -119,9 +122,11 @@ export function UserList({
                 </div>
                 <h3 className="text-lg font-semibold text-slate-900">Failed to load users</h3>
                 <p className="text-sm text-slate-500 mt-1 max-w-md">{error.message}</p>
-                <Button variant="outline" className="mt-4" onClick={() => window.location.reload()}>
-                    Retry
-                </Button>
+                {onRetry && (
+                    <Button variant="outline" className="mt-4" onClick={onRetry}>
+                        Retry
+                    </Button>
+                )}
             </div>
         )
     }

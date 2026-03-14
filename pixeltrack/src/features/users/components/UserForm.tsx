@@ -1,4 +1,4 @@
-import { useForm } from 'react-hook-form'
+import { useForm, useWatch } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { User, Mail, Shield, UserCircle, Building2, Lock, Loader2 } from 'lucide-react'
 import { userSchema, defaultUserValues, type UserFormValues } from '../schemas/userSchema'
@@ -53,8 +53,8 @@ export function UserForm({
     const {
         register,
         handleSubmit,
+        control,
         formState: { errors },
-        watch,
         setValue,
     } = useForm<UserFormValues>({
         resolver: zodResolver(userSchema),
@@ -69,7 +69,7 @@ export function UserForm({
             : defaultUserValues,
     })
 
-    const currentRole = watch('role')
+    const currentRole = useWatch({ control, name: 'role' }) ?? UserRole.EMPLOYEE
     const isClientRole = currentRole === UserRole.CLIENT
 
     const roleOptions = [

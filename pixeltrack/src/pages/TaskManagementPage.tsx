@@ -2,11 +2,11 @@ import { useState, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
     CheckSquare, Search, Bell, Plus,
-    MoreHorizontal, Calendar, Flag, ChevronDown, ChevronLeft, ChevronRight,
-    LayoutGrid, List, Trash2, Edit2, Eye, CheckCircle, Clock, AlertCircle, X, Loader2
+    MoreHorizontal, Calendar, Flag, ChevronLeft, ChevronRight,
+    LayoutGrid, List, Trash2, Edit2, Eye, CheckCircle, Clock, AlertCircle, Loader2
 } from 'lucide-react'
 import { useAuth } from '@/features/auth/useAuth'
-import { useTasks, useCreateTask, useUpdateTask, useDeleteTask, useUpdateTaskStatus } from '@/features/tasks/hooks/useTasks'
+import { useTasks, useCreateTask, useUpdateTask, useDeleteTask } from '@/features/tasks/hooks/useTasks'
 import { useProjects } from '@/features/projects/hooks/useProjects'
 import { useClients } from '@/features/clients/hooks/useClients'
 import { useUsers } from '@/features/users/hooks/useUsers'
@@ -58,7 +58,6 @@ export function TaskManagementPage() {
     const createTask = useCreateTask()
     const updateTask = useUpdateTask()
     const deleteTask = useDeleteTask()
-    const updateTaskStatus = useUpdateTaskStatus()
 
     const [viewMode, setViewMode] = useState<ViewMode>('list')
     const [activeTab, setActiveTab] = useState<FilterTab>('all')
@@ -68,9 +67,6 @@ export function TaskManagementPage() {
     const [editingTask, setEditingTask] = useState<Task | null>(null)
     const [deletingTask, setDeletingTask] = useState<Task | null>(null)
     const [currentPage, setCurrentPage] = useState(1)
-    const [projectFilter, setProjectFilter] = useState<string>('all')
-    const [assigneeFilter, setAssigneeFilter] = useState<string>('all')
-    const [statusFilter, setStatusFilter] = useState<string>('all')
 
     const itemsPerPage = 10
     const employees = users?.filter((u) => u.role !== UserRole.CLIENT) || []
@@ -96,20 +92,8 @@ export function TaskManagementPage() {
             )
         }
 
-        if (projectFilter !== 'all') {
-            result = result.filter((t) => t.clientId === projectFilter)
-        }
-
-        if (assigneeFilter !== 'all') {
-            result = result.filter((t) => t.assignees.includes(assigneeFilter))
-        }
-
-        if (statusFilter !== 'all') {
-            result = result.filter((t) => t.status === statusFilter)
-        }
-
         return result
-    }, [tasks, activeTab, searchQuery, projectFilter, assigneeFilter, statusFilter, user])
+    }, [tasks, activeTab, searchQuery, user])
 
     const paginatedTasks = useMemo(() => {
         const start = (currentPage - 1) * itemsPerPage

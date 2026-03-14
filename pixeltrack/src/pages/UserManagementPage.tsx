@@ -37,7 +37,7 @@ import type { UserFormValues } from '@/features/users/schemas/userSchema'
  * Access: Admin only (protected by RoleGuard)
  */
 export function UserManagementPage() {
-    const { data: users, isLoading, error } = useUsers()
+    const { data: users, isLoading, error, refetch } = useUsers()
     const { data: clients } = useClients()
     const createUser = useCreateUser()
     const updateUser = useUpdateUser()
@@ -129,6 +129,7 @@ export function UserManagementPage() {
                         clients={clients}
                         isLoading={isLoading}
                         error={error}
+                        onRetry={refetch}
                         onEdit={handleEdit}
                         onDelete={handleDelete}
                         onAdd={handleAdd}

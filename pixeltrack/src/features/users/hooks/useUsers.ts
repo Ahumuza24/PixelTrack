@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
-import { getAllUserProfiles, getUserProfile, updateUserProfile } from '@/lib/supabase/users'
+import { getAllUserProfiles, getUserProfile } from '@/lib/supabase/users'
 import { supabase } from '@/lib/supabase/config'
 import type { UserProfile, UserRole } from '@/types'
 
@@ -14,6 +14,7 @@ interface CreateUserInput {
     password: string
     displayName: string
     role: UserRole
+    clientId?: string | null
 }
 
 /**
@@ -23,6 +24,16 @@ interface UpdateUserInput {
     uid: string
     displayName?: string
     role?: UserRole
+    clientId?: string | null
+}
+
+async function invokeAdminFunction<TResponse>(name: string, body: Record<string, unknown>): Promise<TResponse> {
+    const { data, error } = await supabase.functions.invoke<TResponse>(name, { body })
+    if (error) throw error
+    if (!data) {
+        throw new Error(`Failed to invoke ${name}`)
+    }
+    return data
 }
 
 /**
@@ -70,35 +81,14 @@ export function useUser(uid: string | null) {
  * Creates a new user via Supabase Auth.
  */
 async function createUserViaSupabase(input: CreateUserInput): Promise<UserProfile> {
-    const { data: authData, error: authError } = await supabase.auth.signUp({
+    const clientId = input.clientId && input.clientId.length > 0 ? input.clientId : null
+    return invokeAdminFunction<UserProfile>('create-user', {
         email: input.email,
         password: input.password,
-        options: {
-            data: {
-                display_name: input.displayName,
-            },
-        },
+        displayName: input.displayName,
+        role: input.role,
+        clientId,
     })
-
-    if (authError) throw authError
-    if (!authData.user) throw new Error('Failed to create user')
-
-    // Create profile
-    const { error: profileError } = await supabase
-        .from('profiles')
-        .insert({
-            id: authData.user.id,
-            email: input.email,
-            display_name: input.displayName,
-            role: input.role,
-        })
-
-    if (profileError) throw profileError
-
-    const profile = await getUserProfile(authData.user.id)
-    if (!profile) throw new Error('Failed to create user profile')
-
-    return profile
 }
 
 /**
@@ -135,9 +125,12 @@ export function useCreateUser() {
  * Updates an existing user.
  */
 async function updateUserViaSupabase(input: UpdateUserInput): Promise<void> {
-    await updateUserProfile(input.uid, {
+    const clientId = input.clientId && input.clientId.length > 0 ? input.clientId : null
+    await invokeAdminFunction('update-user', {
+        uid: input.uid,
         displayName: input.displayName,
         role: input.role,
+        clientId,
     })
 }
 
@@ -176,16 +169,7 @@ export function useUpdateUser() {
  * Deletes a user.
  */
 async function deleteUserViaSupabase(uid: string): Promise<void> {
-    // Delete profile first
-    const { error: profileError } = await supabase
-        .from('profiles')
-        .delete()
-        .eq('id', uid)
-
-    if (profileError) throw profileError
-
-    // Note: To delete auth user, you need admin privileges (Edge Function or server-side)
-    // For now, we just disable the user by updating their status
+    await invokeAdminFunction('delete-user', { uid })
 }
 
 /**

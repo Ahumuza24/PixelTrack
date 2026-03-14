@@ -57,6 +57,7 @@ interface TaskListProps {
     employees?: UserProfile[]
     isLoading?: boolean
     error?: Error | null
+    onRetry?: () => void
     onEdit: (task: Task) => void
     onDelete: (task: Task) => void
     onAdd: () => void
@@ -98,6 +99,7 @@ export function TaskList({
     employees = [],
     isLoading = false,
     error = null,
+    onRetry,
     onEdit,
     onDelete,
     onAdd,
@@ -172,9 +174,11 @@ export function TaskList({
                 </div>
                 <h3 className="text-lg font-semibold text-slate-900 mb-2">Failed to load tasks</h3>
                 <p className="text-slate-500 mb-4">{error.message}</p>
-                <Button onClick={() => window.location.reload()} variant="outline">
-                    Try Again
-                </Button>
+                {onRetry && (
+                    <Button onClick={onRetry} variant="outline">
+                        Try Again
+                    </Button>
+                )}
             </div>
         )
     }

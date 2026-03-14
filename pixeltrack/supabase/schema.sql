@@ -98,7 +98,11 @@ CREATE POLICY "Users can update own profile" ON public.profiles
     FOR UPDATE
     TO authenticated
     USING (auth.uid() = id)
-    WITH CHECK (auth.uid() = id);
+    WITH CHECK (
+        auth.uid() = id
+        AND role = (SELECT role FROM public.profiles WHERE id = auth.uid())
+        AND client_id = (SELECT client_id FROM public.profiles WHERE id = auth.uid())
+    );
 
 -- ============================================
 -- RLS POLICIES FOR CLIENTS
@@ -152,14 +156,18 @@ CREATE POLICY "Admins have full access to tasks" ON public.tasks
         )
     );
 
--- Employees can read all tasks and update tasks they're assigned to
-CREATE POLICY "Employees can read all tasks" ON public.tasks
+-- Employees can read tasks they're assigned to (or created)
+CREATE POLICY "Employees can read assigned tasks" ON public.tasks
     FOR SELECT
     TO authenticated
     USING (
         EXISTS (
             SELECT 1 FROM public.profiles
-            WHERE id = auth.uid() AND role IN ('admin', 'employee')
+            WHERE id = auth.uid() AND role = 'employee'
+        )
+        AND (
+            auth.uid() = ANY(assignees)
+            OR created_by = auth.uid()
         )
     );
 
@@ -239,7 +247,7 @@ BEGIN
         new.id,
         new.email,
         COALESCE(new.raw_user_meta_data->>'display_name', new.email),
-        COALESCE(new.raw_user_meta_data->>'role', 'employee')
+        'employee'
     );
     RETURN new;
 END;

@@ -41,6 +41,8 @@ import { TaskStatus as TaskStatusConst, TaskPriority as TaskPriorityConst } from
 interface TaskFormProps {
     /** Existing task data when editing, undefined when creating */
     task?: Task
+    /** Initial values for create flow (prefill) */
+    initialValues?: Partial<TaskFormValues>
 
     /** Available clients for selection */
     clients: Client[]
@@ -93,6 +95,7 @@ const priorityColors: Record<TaskPriority, string> = {
 
 export function TaskForm({
     task,
+    initialValues,
     clients,
     projects,
     employees,
@@ -100,9 +103,16 @@ export function TaskForm({
     onCancel,
     isSubmitting = false,
 }: TaskFormProps) {
+    const baseValues = useMemo(() => {
+        if (task) {
+            return taskToFormValues(task)
+        }
+        return { ...defaultTaskValues, ...initialValues }
+    }, [task, initialValues])
+
     const form = useForm<TaskFormValues>({
         resolver: zodResolver(taskSchema),
-        defaultValues: task ? taskToFormValues(task) : defaultTaskValues,
+        defaultValues: baseValues,
     })
 
     const clientLookup = useMemo(() => {
@@ -113,6 +123,9 @@ export function TaskForm({
 
     const selectedProjectId = useWatch({ control: form.control, name: 'projectId' }) ?? ''
     const assigneeSelection = useWatch({ control: form.control, name: 'assignees' }) ?? []
+    const clientValue = useWatch({ control: form.control, name: 'clientId' }) ?? ''
+    const statusValue = useWatch({ control: form.control, name: 'status' }) ?? TaskStatusConst.NOT_STARTED
+    const priorityValue = useWatch({ control: form.control, name: 'priority' }) ?? TaskPriorityConst.MEDIUM
 
     useEffect(() => {
         if (selectedProjectId) {
@@ -122,6 +135,10 @@ export function TaskForm({
             }
         }
     }, [selectedProjectId, projects, form])
+
+    useEffect(() => {
+        form.reset(baseValues)
+    }, [form, baseValues])
 
     const handleSubmit = form.handleSubmit(onSubmit)
 
@@ -171,7 +188,7 @@ export function TaskForm({
                         Status
                     </Label>
                     <Select
-                        value={form.watch('status')}
+                        value={statusValue}
                         onValueChange={(value) => form.setValue('status', value as TaskStatus)}
                     >
                         <SelectTrigger id="status" className={form.formState.errors.status ? 'border-red-500' : ''}>
@@ -200,7 +217,7 @@ export function TaskForm({
                         Priority
                     </Label>
                     <Select
-                        value={form.watch('priority')}
+                        value={priorityValue}
                         onValueChange={(value) => form.setValue('priority', value as TaskPriority)}
                     >
                         <SelectTrigger id="priority" className={form.formState.errors.priority ? 'border-red-500' : ''}>
@@ -286,7 +303,7 @@ export function TaskForm({
                     Client
                 </Label>
                 <Select
-                    value={form.watch('clientId')}
+                    value={clientValue}
                     onValueChange={(value) => form.setValue('clientId', value)}
                     disabled={Boolean(selectedProjectId)}
                 >

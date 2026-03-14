@@ -1,10 +1,10 @@
 import { useState, useMemo } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import {
-    FolderKanban, ArrowLeft, Calendar, Clock, CheckCircle, AlertCircle,
-    Edit2, Trash2, Plus, MoreHorizontal, Loader2, Users, CheckSquare
+    FolderKanban, ArrowLeft, Calendar, Clock, AlertCircle,
+    Edit2, Trash2, Plus, Loader2, Users, CheckSquare
 } from 'lucide-react'
-import { useProject, useUpdateProject, useDeleteProject } from '@/features/projects/hooks/useProjects'
+import { useProject, useDeleteProject } from '@/features/projects/hooks/useProjects'
 import { useTasks, useCreateTask } from '@/features/tasks/hooks/useTasks'
 import { useClients } from '@/features/clients/hooks/useClients'
 import { useUsers } from '@/features/users/hooks/useUsers'
@@ -19,12 +19,9 @@ import {
     AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
     AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
-import {
-    DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu'
 import { TaskForm } from '@/features/tasks/components/TaskForm'
 import type { TaskFormValues } from '@/features/tasks/schemas/taskSchema'
-import type { Task, ProjectStatus } from '@/types'
+import type { ProjectStatus } from '@/types'
 import { TaskStatus, UserRole } from '@/types'
 
 const statusConfig: Record<ProjectStatus, { label: string; bg: string; color: string }> = {
@@ -42,7 +39,6 @@ export function ProjectDetailPage() {
     const { data: allTasks, isLoading: tasksLoading } = useTasks()
     const { data: clients } = useClients()
     const { data: users } = useUsers()
-    const updateProject = useUpdateProject()
     const deleteProject = useDeleteProject()
     const createTask = useCreateTask()
 
@@ -77,6 +73,15 @@ export function ProjectDetailPage() {
         return client?.name || 'Unknown Client'
     }
 
+    /**
+     * Formats ISO date strings safely for UI output.
+     */
+    const formatDate = (value?: string) => {
+        if (!value) return 'TBD'
+        const parsed = new Date(value)
+        return Number.isNaN(parsed.getTime()) ? 'TBD' : parsed.toLocaleDateString()
+    }
+
     const handleDelete = async () => {
         if (projectId) {
             await deleteProject.mutateAsync(projectId)
@@ -90,6 +95,11 @@ export function ProjectDetailPage() {
             setIsTaskFormOpen(false)
         }
     }
+
+    const taskFormInitialValues = useMemo(() => {
+        if (!project) return undefined
+        return { projectId: project.id, clientId: project.clientId }
+    }, [project])
 
     const isLoading = projectLoading || tasksLoading
 
@@ -172,11 +182,11 @@ export function ProjectDetailPage() {
                                 <div className="grid grid-cols-2 gap-4">
                                     <div className="flex items-center gap-2 text-sm text-slate-600">
                                         <Calendar className="w-4 h-4" />
-                                        <span>Start: {new Date(project.startDate).toLocaleDateString()}</span>
+                                        <span>Start: {formatDate(project.startDate)}</span>
                                     </div>
                                     <div className="flex items-center gap-2 text-sm text-slate-600">
                                         <Calendar className="w-4 h-4" />
-                                        <span>End: {new Date(project.endDate).toLocaleDateString()}</span>
+                                        <span>End: {formatDate(project.dueDate)}</span>
                                     </div>
                                 </div>
                             </CardContent>
@@ -301,7 +311,7 @@ export function ProjectDetailPage() {
                                         </div>
                                         <div>
                                             <p className="text-sm font-medium text-slate-900">Project Started</p>
-                                            <p className="text-xs text-slate-500">{new Date(project.startDate).toLocaleDateString()}</p>
+                                            <p className="text-xs text-slate-500">{formatDate(project.startDate)}</p>
                                         </div>
                                     </div>
                                     <div className="flex items-center gap-3">
@@ -316,7 +326,7 @@ export function ProjectDetailPage() {
                                             <p className="text-sm font-medium text-slate-900">
                                                 {project.status === 'completed' ? 'Completed' : 'Due Date'}
                                             </p>
-                                            <p className="text-xs text-slate-500">{new Date(project.endDate).toLocaleDateString()}</p>
+                                            <p className="text-xs text-slate-500">{formatDate(project.dueDate)}</p>
                                         </div>
                                     </div>
                                 </div>
@@ -375,7 +385,8 @@ export function ProjectDetailPage() {
                     </DialogHeader>
                     <TaskForm
                         clients={clients || []}
-                        projects={[]}
+                        projects={project ? [project] : []}
+                        initialValues={taskFormInitialValues}
                         employees={employees}
                         onSubmit={handleCreateTask}
                         onCancel={() => setIsTaskFormOpen(false)}
