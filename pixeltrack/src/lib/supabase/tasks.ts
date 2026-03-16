@@ -77,28 +77,33 @@ export async function getTask(taskId: string): Promise<Task | null> {
 }
 
 /**
- * Updates an existing task.
+ * Updates an existing task using Edge Function (bypasses RLS recursion issue).
  * @param data - Update data including the task id
  */
 export async function updateTask(data: UpdateTaskInput): Promise<void> {
-    const { id, ...updates } = data
+    const { data: sessionData } = await supabase.auth.getSession()
+    const token = sessionData.session?.access_token
+    
+    if (!token) {
+        throw new Error('Not authenticated')
+    }
 
-    const updateData: Record<string, unknown> = {}
-    if (updates.title) updateData.title = updates.title
-    if (updates.description !== undefined) updateData.description = updates.description
-    if (updates.status) updateData.status = updates.status
-    if (updates.priority) updateData.priority = updates.priority
-    if (updates.dueDate) updateData.due_date = updates.dueDate
-    if (updates.clientId) updateData.client_id = updates.clientId
-    if (updates.projectId !== undefined) updateData.project_id = updates.projectId
-    if (updates.assignees) updateData.assignees = updates.assignees
+    const functionUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/update-task`
+    
+    const response = await fetch(functionUrl, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`,
+            'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY,
+        },
+        body: JSON.stringify(data),
+    })
 
-    const { error } = await supabase
-        .from('tasks')
-        .update(updateData)
-        .eq('id', id)
-
-    if (error) throw error
+    if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ error: 'Unknown error' }))
+        throw new Error(errorData.error || `Failed to update task: ${response.status}`)
+    }
 }
 
 /**
@@ -201,10 +206,32 @@ export async function getTasksByAssignee(assigneeId: string): Promise<Task[]> {
 }
 
 /**
- * Updates only the task status.
+ * Updates only the task status using Edge Function (bypasses RLS recursion issue).
  * @param taskId - The task ID
  * @param status - The new status value
  */
 export async function updateTaskStatus(taskId: string, status: TaskStatus): Promise<void> {
-    await updateTask({ id: taskId, status })
+    const { data: sessionData } = await supabase.auth.getSession()
+    const token = sessionData.session?.access_token
+    
+    if (!token) {
+        throw new Error('Not authenticated')
+    }
+
+    const functionUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/update-task-status`
+    
+    const response = await fetch(functionUrl, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`,
+            'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY,
+        },
+        body: JSON.stringify({ taskId, status }),
+    })
+
+    if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ error: 'Unknown error' }))
+        throw new Error(errorData.error || `Failed to update task status: ${response.status}`)
+    }
 }

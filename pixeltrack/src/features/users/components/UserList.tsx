@@ -31,6 +31,8 @@ interface UserListProps {
     onDelete: (user: UserProfile) => void
     /** Called when user clicks add new user */
     onAdd: () => void
+    /** Called when user clicks reset password action */
+    onResetPassword: (user: UserProfile) => void
     /** Optional client data for displaying client names */
     clients?: Client[]
     /** Optional error state */
@@ -66,6 +68,7 @@ export function UserList({
     onEdit,
     onDelete,
     onAdd,
+    onResetPassword,
     clients = [],
     error = null,
     onRetry,
@@ -296,6 +299,9 @@ export function UserList({
                                                 <DropdownMenuContent align="end">
                                                     <DropdownMenuItem onClick={() => onEdit(user)}>
                                                         Edit
+                                                    </DropdownMenuItem>
+                                                    <DropdownMenuItem onClick={() => onResetPassword(user)}>
+                                                        Reset Password
                                                     </DropdownMenuItem>
                                                     <DropdownMenuItem
                                                         onClick={() => onDelete(user)}

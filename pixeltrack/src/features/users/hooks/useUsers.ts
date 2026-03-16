@@ -28,12 +28,37 @@ interface UpdateUserInput {
 }
 
 async function invokeAdminFunction<TResponse>(name: string, body: Record<string, unknown>): Promise<TResponse> {
-    const { data, error } = await supabase.functions.invoke<TResponse>(name, { body })
-    if (error) throw error
-    if (!data) {
-        throw new Error(`Failed to invoke ${name}`)
+    // Refresh session to ensure we have a valid JWT
+    const { data: refreshData, error: refreshError } = await supabase.auth.refreshSession()
+    if (refreshError) {
+        throw new Error('Session expired - please log in again')
     }
-    return data
+    
+    const token = refreshData.session?.access_token
+    if (!token) {
+        throw new Error('Not authenticated - please log in again')
+    }
+
+    const functionUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/${name}`
+    
+    const response = await fetch(functionUrl, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`,
+            'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY,
+        },
+        body: JSON.stringify(body),
+    })
+
+    if (!response.ok) {
+        const errorText = await response.text()
+        const errorData = errorText ? JSON.parse(errorText) : { error: 'Unknown error' }
+        throw new Error(errorData.error || `Failed to invoke ${name}: ${response.status}`)
+    }
+
+    const data = await response.json()
+    return data as TResponse
 }
 
 /**
@@ -170,6 +195,35 @@ export function useUpdateUser() {
  */
 async function deleteUserViaSupabase(uid: string): Promise<void> {
     await invokeAdminFunction('delete-user', { uid })
+}
+
+/**
+ * Resets a user's password.
+ */
+async function resetPasswordViaSupabase(uid: string, newPassword: string): Promise<void> {
+    await invokeAdminFunction('reset-password', { uid, newPassword })
+}
+
+/**
+ * Hook to reset a user's password.
+ *
+ * @example
+ * ```ts
+ * const { mutateAsync: reset } = useResetPassword()
+ * await reset({ uid: 'user-123', newPassword: 'newPassword123' })
+ * ```
+ */
+export function useResetPassword() {
+    return useMutation({
+        mutationFn: ({ uid, newPassword }: { uid: string; newPassword: string }) =>
+            resetPasswordViaSupabase(uid, newPassword),
+        onSuccess: () => {
+            toast.success('Password reset successfully')
+        },
+        onError: (error) => {
+            toast.error(`Failed to reset password: ${error.message}`)
+        },
+    })
 }
 
 /**

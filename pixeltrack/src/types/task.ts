@@ -173,6 +173,29 @@ export interface TaskWithDetails extends Task {
 }
 
 /**
+ * Calculate task progress percentage based on status
+ */
+export function getTaskProgress(status: TaskStatus): number {
+    const progressMap: Record<TaskStatus, number> = {
+        [TaskStatus.NOT_STARTED]: 0,
+        [TaskStatus.IN_PROGRESS]: 50,
+        [TaskStatus.IN_REVIEW]: 75,
+        [TaskStatus.COMPLETE]: 100,
+        [TaskStatus.BLOCKED]: 0,
+    }
+    return progressMap[status]
+}
+
+/**
+ * Calculate project progress based on completed tasks
+ */
+export function calculateProjectProgress(tasks: Task[]): number {
+    if (tasks.length === 0) return 0
+    const completed = tasks.filter((t) => t.status === TaskStatus.COMPLETE).length
+    return Math.round((completed / tasks.length) * 100)
+}
+
+/**
  * Task statistics for dashboard display
  */
 export interface TaskStats {

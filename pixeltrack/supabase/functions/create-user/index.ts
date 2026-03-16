@@ -33,7 +33,8 @@ function validatePayload(payload: CreateUserPayload) {
 /**
  * Edge Function to create a new user and profile with admin-only access.
  */
-Deno.serve(async (req) => {
+// @ts-expect-error Deno.serve is available in Supabase Edge Runtime
+Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders })
   }

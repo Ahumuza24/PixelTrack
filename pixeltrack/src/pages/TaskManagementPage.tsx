@@ -6,13 +6,12 @@ import {
     LayoutGrid, List, Trash2, Edit2, Eye, CheckCircle, Clock, AlertCircle, Loader2
 } from 'lucide-react'
 import { useAuth } from '@/features/auth/useAuth'
-import { useTasks, useCreateTask, useUpdateTask, useDeleteTask } from '@/features/tasks/hooks/useTasks'
+import { useTasks, useCreateTask, useUpdateTask, useDeleteTask, useUpdateTaskStatus } from '@/features/tasks/hooks/useTasks'
 import { useProjects } from '@/features/projects/hooks/useProjects'
 import { useClients } from '@/features/clients/hooks/useClients'
 import { useUsers } from '@/features/users/hooks/useUsers'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
 import { Checkbox } from '@/components/ui/checkbox'
 import {
@@ -25,10 +24,13 @@ import {
 import {
     DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
+import {
+    Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+} from '@/components/ui/select'
 import { TaskForm } from '@/features/tasks/components/TaskForm'
 import type { TaskFormValues } from '@/features/tasks/schemas/taskSchema'
 import type { Task } from '@/types'
-import { TaskStatus, TaskPriority, UserRole } from '@/types'
+import { TaskStatus, TaskPriority, UserRole, getTaskProgress } from '@/types'
 
 type FilterTab = 'all' | 'my-tasks' | 'due-soon' | 'high-priority'
 type ViewMode = 'list' | 'kanban'
@@ -58,6 +60,7 @@ export function TaskManagementPage() {
     const createTask = useCreateTask()
     const updateTask = useUpdateTask()
     const deleteTask = useDeleteTask()
+    const updateTaskStatus = useUpdateTaskStatus()
 
     const [viewMode, setViewMode] = useState<ViewMode>('list')
     const [activeTab, setActiveTab] = useState<FilterTab>('all')
@@ -116,6 +119,10 @@ export function TaskManagementPage() {
         setDeletingTask(task)
     }
 
+    const handleQuickStatusChange = async (taskId: string, newStatus: TaskStatus) => {
+        await updateTaskStatus.mutateAsync({ taskId, status: newStatus })
+    }
+
     const confirmDelete = async () => {
         if (deletingTask) {
             await deleteTask.mutateAsync(deletingTask.id)
@@ -124,13 +131,17 @@ export function TaskManagementPage() {
     }
 
     const handleSubmit = async (values: TaskFormValues) => {
-        if (editingTask) {
-            await updateTask.mutateAsync({ id: editingTask.id, ...values })
-        } else {
-            await createTask.mutateAsync(values)
+        try {
+            if (editingTask) {
+                await updateTask.mutateAsync({ id: editingTask.id, ...values })
+            } else {
+                await createTask.mutateAsync(values)
+            }
+            setIsFormOpen(false)
+            setEditingTask(null)
+        } catch (error) {
+            console.error('Submit error:', error)
         }
-        setIsFormOpen(false)
-        setEditingTask(null)
     }
 
     const toggleTaskSelection = (taskId: string) => {
@@ -335,9 +346,29 @@ export function TaskManagementPage() {
                                                         </div>
                                                     </td>
                                                     <td className="px-4 py-3">
-                                                        <Badge className={`${status.bg} ${status.color}`}>
-                                                            {status.label}
-                                                        </Badge>
+                                                        <Select
+                                                            value={task.status}
+                                                            onValueChange={(value) => handleQuickStatusChange(task.id, value as TaskStatus)}
+                                                            disabled={updateTaskStatus.isPending}
+                                                        >
+                                                            <SelectTrigger className={`h-8 w-32 text-xs ${status.bg} ${status.color} border-0`}>
+                                                                <SelectValue />
+                                                            </SelectTrigger>
+                                                            <SelectContent>
+                                                                {Object.values(TaskStatus).map((s) => (
+                                                                    <SelectItem key={s} value={s} className="text-xs">
+                                                                        {statusConfig[s].label}
+                                                                    </SelectItem>
+                                                                ))}
+                                                            </SelectContent>
+                                                        </Select>
+                                                        {/* Progress bar */}
+                                                        <div className="w-full h-1 bg-slate-100 rounded-full mt-1.5 overflow-hidden">
+                                                            <div
+                                                                className="h-full bg-[#0048ad] rounded-full transition-all"
+                                                                style={{ width: `${getTaskProgress(task.status)}%` }}
+                                                            />
+                                                        </div>
                                                     </td>
                                                     <td className="px-4 py-3">
                                                         <span className={`text-sm font-medium ${priority.color}`}>
@@ -446,7 +477,7 @@ export function TaskManagementPage() {
                         </DialogDescription>
                     </DialogHeader>
                     <TaskForm
-                        task={editingTask}
+                        task={editingTask || undefined}
                         clients={clients || []}
                         projects={projects || []}
                         employees={employees}

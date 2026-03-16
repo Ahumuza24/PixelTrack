@@ -43,7 +43,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
                 if (!profile) {
                     await createUserProfile(sbUser.id, {
                         email: sbUser.email ?? '',
-                        displayName: sbUser.user_metadata?.display_name ?? sbUser.email ?? 'Unknown',
+                        displayName: sbUser.user_metadata?.display_name ?? 'Unknown',
                     })
                     profile = await getUserProfile(sbUser.id)
                 }

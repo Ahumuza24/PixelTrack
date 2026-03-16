@@ -18,7 +18,7 @@ import {
     AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
 import { Button } from '@/components/ui/button'
-import { UserList, UserForm, useUsers, useCreateUser, useUpdateUser, useDeleteUser } from '@/features/users'
+import { UserList, UserForm, useUsers, useCreateUser, useUpdateUser, useDeleteUser, useResetPassword } from '@/features/users'
 import { useClients } from '@/features/clients'
 import type { UserProfile } from '@/types'
 import type { UserFormValues } from '@/features/users/schemas/userSchema'
@@ -42,10 +42,13 @@ export function UserManagementPage() {
     const createUser = useCreateUser()
     const updateUser = useUpdateUser()
     const deleteUser = useDeleteUser()
+    const resetPassword = useResetPassword()
 
     const [isFormOpen, setIsFormOpen] = useState(false)
     const [editingUser, setEditingUser] = useState<UserProfile | null>(null)
     const [deletingUser, setDeletingUser] = useState<UserProfile | null>(null)
+    const [resettingUser, setResettingUser] = useState<UserProfile | null>(null)
+    const [newPassword, setNewPassword] = useState('')
 
     const handleAdd = () => {
         setEditingUser(null)
@@ -92,6 +95,14 @@ export function UserManagementPage() {
         }
     }
 
+    const handleResetPassword = async () => {
+        if (resettingUser && newPassword) {
+            await resetPassword.mutateAsync({ uid: resettingUser.uid, newPassword })
+            setResettingUser(null)
+            setNewPassword('')
+        }
+    }
+
     return (
         <div className="min-h-screen bg-slate-50">
             {/* Page Header */}
@@ -133,6 +144,7 @@ export function UserManagementPage() {
                         onEdit={handleEdit}
                         onDelete={handleDelete}
                         onAdd={handleAdd}
+                        onResetPassword={setResettingUser}
                     />
                 </div>
             </main>
@@ -184,6 +196,48 @@ export function UserManagementPage() {
                     </AlertDialogFooter>
                 </AlertDialogContent>
             </AlertDialog>
+
+            {/* Reset Password Dialog */}
+            <Dialog open={!!resettingUser} onOpenChange={() => { setResettingUser(null); setNewPassword('') }}>
+                <DialogContent className="sm:max-w-md">
+                    <DialogHeader>
+                        <DialogTitle>Reset Password</DialogTitle>
+                        <DialogDescription>
+                            Enter a new password for <strong>{resettingUser?.displayName}</strong>.
+                            The user will need to use this password on their next login.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <div className="space-y-4 py-4">
+                        <div className="space-y-2">
+                            <label className="text-sm font-medium">New Password</label>
+                            <input
+                                type="password"
+                                value={newPassword}
+                                onChange={(e) => setNewPassword(e.target.value)}
+                                placeholder="Enter new password (min 8 characters)"
+                                className="w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-cobalt/50"
+                                minLength={8}
+                            />
+                        </div>
+                    </div>
+                    <div className="flex gap-3">
+                        <Button
+                            variant="outline"
+                            onClick={() => { setResettingUser(null); setNewPassword('') }}
+                            className="flex-1"
+                        >
+                            Cancel
+                        </Button>
+                        <Button
+                            onClick={handleResetPassword}
+                            disabled={resetPassword.isPending || newPassword.length < 8}
+                            className="flex-1 bg-cobalt hover:bg-cobalt-600"
+                        >
+                            {resetPassword.isPending ? 'Resetting...' : 'Reset Password'}
+                        </Button>
+                    </div>
+                </DialogContent>
+            </Dialog>
         </div>
     )
 }

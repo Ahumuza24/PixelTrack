@@ -26,7 +26,8 @@ function validatePayload(payload: UpdateUserPayload) {
 /**
  * Edge Function to update user profile metadata with admin-only access.
  */
-Deno.serve(async (req) => {
+// @ts-expect-error Deno is available in Supabase Edge Functions runtime
+Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders })
   }
