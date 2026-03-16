@@ -23,6 +23,23 @@
  */
 
 /**
+ * File metadata associated with a task upload.
+ */
+export interface TaskFile {
+    id: string
+    taskId: string
+    uploadedBy: string | null
+    fileName: string
+    fileUrl: string | null
+    fileType: string
+    fileSize: number | null
+    version: number
+    isExternalLink: boolean
+    externalUrl?: string | null
+    createdAt: string
+}
+
+/**
  * Task status values representing the workflow stages
  */
 export const TaskStatus = {
