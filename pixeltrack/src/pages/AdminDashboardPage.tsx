@@ -1,30 +1,21 @@
 import { useNavigate } from 'react-router-dom'
-import { CheckSquare, Users, Plus, Loader2, CheckCircle, Building2, AlertCircle, ArrowRight, Search, Bell, MessageSquare, Upload, List, Eye, Folder } from 'lucide-react'
+import { CheckSquare, Users, Plus, Loader2, CheckCircle, Building2, AlertCircle, ArrowRight, Search, Bell, MessageSquare, Upload, List, Eye, FolderKanban } from 'lucide-react'
 import { useAuth } from '@/features/auth/useAuth'
 import { useTasks } from '@/features/tasks/hooks/useTasks'
+import { useProjectsWithAnalytics } from '@/features/projects/hooks/useProjects'
 import { useClients } from '@/features/clients'
 import { useUsers } from '@/features/users'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
-import { TaskStatus, UserRole } from '@/types'
-
-/**
- * Generates a stable progress percentage for display-only UI.
- */
-function getProgressFromSeed(seed: string) {
-    let hash = 0
-    for (let i = 0; i < seed.length; i += 1) {
-        hash = (hash * 31 + seed.charCodeAt(i)) % 1000
-    }
-    return 60 + (hash % 41)
-}
+import { TaskStatus, UserRole, ProjectStatus } from '@/types'
 
 export function AdminDashboardPage() {
     const navigate = useNavigate()
     const { user } = useAuth()
-    const { data: tasks, isLoading: tasksLoading } = useTasks()
+    const { data: tasks } = useTasks()
+    const { data: projects, isLoading: projectsLoading } = useProjectsWithAnalytics()
     const { data: clients } = useClients()
     const { data: users } = useUsers()
 
@@ -38,7 +29,8 @@ export function AdminDashboardPage() {
 
     const totalClients = clients?.length || 0
     const totalEmployees = users?.filter((u) => u.role === UserRole.EMPLOYEE).length || 0
-    const activeProjects = tasks?.slice(0, 3) || []
+    const totalProjects = projects?.length || 0
+    const activeProjects = projects?.filter((p) => p.status === ProjectStatus.ACTIVE).slice(0, 3) || []
 
     const todoTasks = tasks?.filter((t) => t.status === TaskStatus.NOT_STARTED) || []
     const inProgressTasksList = tasks?.filter((t) => t.status === TaskStatus.IN_PROGRESS) || []
@@ -51,9 +43,10 @@ export function AdminDashboardPage() {
     ]
 
     const quickActions = [
-        { icon: Plus, label: 'New Task', href: '/admin/tasks', color: 'bg-[#0048ad]' },
-        { icon: Building2, label: 'Add Client', href: '/admin/clients', color: 'bg-emerald-600' },
-        { icon: Users, label: 'Add Team Member', href: '/admin/users', color: 'bg-violet-600' },
+        { icon: Plus, label: 'New Project', href: '/admin/projects', color: 'bg-[#0048ad]' },
+        { icon: Plus, label: 'New Task', href: '/admin/tasks', color: 'bg-emerald-600' },
+        { icon: Building2, label: 'Add Client', href: '/admin/clients', color: 'bg-violet-600' },
+        { icon: Users, label: 'Add Team Member', href: '/admin/users', color: 'bg-orange-600' },
     ]
 
     return (
@@ -96,7 +89,20 @@ export function AdminDashboardPage() {
                     </section>
 
                     {/* Stats Cards */}
-                    <section className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                    <section className="grid grid-cols-2 lg:grid-cols-5 gap-4">
+                        <Card>
+                            <CardContent className="p-4">
+                                <div className="flex items-center justify-between">
+                                    <div>
+                                        <p className="text-sm text-slate-500">Projects</p>
+                                        <p className="text-2xl font-bold">{totalProjects}</p>
+                                    </div>
+                                    <div className="h-10 w-10 bg-indigo-100 rounded-lg flex items-center justify-center">
+                                        <FolderKanban className="w-5 h-5 text-indigo-600" />
+                                    </div>
+                                </div>
+                            </CardContent>
+                        </Card>
                         <Card>
                             <CardContent className="p-4">
                                 <div className="flex items-center justify-between">
@@ -193,12 +199,12 @@ export function AdminDashboardPage() {
                     <section>
                         <div className="flex items-center justify-between mb-4">
                             <h3 className="text-xl font-bold">Active Projects</h3>
-                            <button onClick={() => navigate('/admin/tasks')} className="text-[#0048ad] text-sm font-semibold hover:underline">
+                            <button onClick={() => navigate('/admin/projects')} className="text-[#0048ad] text-sm font-semibold hover:underline">
                                 View all
                             </button>
                         </div>
 
-                        {tasksLoading ? (
+                        {projectsLoading ? (
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                                 {[1, 2, 3].map((i) => (
                                     <div key={i} className="h-48 bg-white rounded-xl animate-pulse" />
@@ -206,38 +212,39 @@ export function AdminDashboardPage() {
                             </div>
                         ) : activeProjects.length > 0 ? (
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                                {activeProjects.map((task) => {
-                                    const iconStyles = [
-                                        { bg: 'bg-indigo-100', color: 'text-indigo-600' },
-                                        { bg: 'bg-emerald-100', color: 'text-emerald-600' },
-                                        { bg: 'bg-sky-100', color: 'text-sky-600' },
-                                    ]
-                                    const iconStyle = iconStyles[task.title.length % 3]
-                                    const progress = getProgressFromSeed(task.id)
-                                    const isOnTrack = progress > 60
+                                {activeProjects.map((project) => {
+                                    const progress = project.progress
+                                    const statusConfig: Record<string, { label: string; bg: string; color: string; dot: string }> = {
+                                        not_started: { label: 'Not Started', bg: 'bg-slate-100', color: 'text-slate-700', dot: 'bg-slate-500' },
+                                        active: { label: 'Active', bg: 'bg-blue-100', color: 'text-blue-700', dot: 'bg-blue-500' },
+                                        on_hold: { label: 'On Hold', bg: 'bg-yellow-100', color: 'text-yellow-700', dot: 'bg-yellow-500' },
+                                        completed: { label: 'Completed', bg: 'bg-green-100', color: 'text-green-700', dot: 'bg-green-500' },
+                                        cancelled: { label: 'Cancelled', bg: 'bg-red-100', color: 'text-red-700', dot: 'bg-red-500' },
+                                    }
+                                    const config = statusConfig[project.status] || statusConfig.not_started
 
                                     return (
                                         <div
-                                            key={task.id}
+                                            key={project.id}
                                             className="bg-white p-5 rounded-xl border border-slate-200 hover:border-[#0048ad]/50 transition-all cursor-pointer group"
-                                            onClick={() => navigate(`/tasks/${task.id}`)}
+                                            onClick={() => navigate(`/admin/projects/${project.id}`)}
                                         >
                                             <div className="flex justify-between items-start mb-4">
-                                                <div className={`h-12 w-12 rounded-lg ${iconStyle.bg} flex items-center justify-center ${iconStyle.color}`}>
-                                                    <Folder className="w-6 h-6" />
+                                                <div className="h-12 w-12 rounded-lg bg-[#0048ad]/10 flex items-center justify-center text-[#0048ad]">
+                                                    <FolderKanban className="w-6 h-6" />
                                                 </div>
-                                                <Badge className={isOnTrack ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'}>
-                                                    <span className={`h-1.5 w-1.5 rounded-full ${isOnTrack ? 'bg-green-500' : 'bg-amber-500'} mr-1`} />
-                                                    {isOnTrack ? 'On Track' : 'At Risk'}
+                                                <Badge className={`${config.bg} ${config.color}`}>
+                                                    <span className={`h-1.5 w-1.5 rounded-full ${config.dot} mr-1`} />
+                                                    {config.label}
                                                 </Badge>
                                             </div>
-                                            <h4 className="font-bold text-lg mb-1 group-hover:text-[#0048ad] transition-colors">{task.title}</h4>
+                                            <h4 className="font-bold text-lg mb-1 group-hover:text-[#0048ad] transition-colors">{project.title}</h4>
                                             <p className="text-sm text-slate-500 mb-6">
-                                                Client: {clients?.find((c) => c.id === task.clientId)?.name || 'Unknown'}
+                                                Client: {project.clientName || 'Unknown'}
                                             </p>
                                             <div className="space-y-2">
                                                 <div className="flex justify-between text-xs font-medium">
-                                                    <span>Progress</span>
+                                                    <span>{project.completedTasks}/{project.totalTasks} tasks</span>
                                                     <span>{progress}%</span>
                                                 </div>
                                                 <div className="w-full h-2 bg-slate-100 rounded-full overflow-hidden">
@@ -251,12 +258,12 @@ export function AdminDashboardPage() {
                         ) : (
                             <Card className="bg-white">
                                 <CardContent className="p-8 text-center">
-                                    <Folder className="w-12 h-12 text-slate-300 mx-auto mb-4" />
+                                    <FolderKanban className="w-12 h-12 text-slate-300 mx-auto mb-4" />
                                     <h3 className="text-lg font-medium text-slate-900 mb-2">No active projects</h3>
-                                    <p className="text-slate-500 mb-4">Create your first task to get started</p>
-                                    <Button onClick={() => navigate('/admin/tasks')}>
+                                    <p className="text-slate-500 mb-4">Create your first project to get started</p>
+                                    <Button onClick={() => navigate('/admin/projects')}>
                                         <Plus className="w-4 h-4 mr-2" />
-                                        Create Task
+                                        Create Project
                                     </Button>
                                 </CardContent>
                             </Card>

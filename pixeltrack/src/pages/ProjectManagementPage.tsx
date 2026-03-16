@@ -10,7 +10,7 @@ import {
     ArrowRight,
     AlertCircle,
 } from 'lucide-react'
-import { useProjectsWithAnalytics, useCreateProject, useDeleteProject } from '@/features/projects/hooks/useProjects'
+import { useProjectsWithAnalytics, useCreateProject, useUpdateProject, useDeleteProject } from '@/features/projects/hooks/useProjects'
 import { useClients } from '@/features/clients'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
@@ -42,6 +42,7 @@ import {
 import { ProjectStatus, type ProjectWithClientAndAnalytics } from '@/types'
 
 const statusConfig: Record<ProjectStatus, { label: string; bg: string; color: string }> = {
+    [ProjectStatus.NOT_STARTED]: { label: 'Not Started', bg: 'bg-slate-100', color: 'text-slate-600' },
     [ProjectStatus.ACTIVE]: { label: 'Active', bg: 'bg-green-100', color: 'text-green-700' },
     [ProjectStatus.COMPLETED]: { label: 'Completed', bg: 'bg-blue-100', color: 'text-blue-700' },
     [ProjectStatus.ON_HOLD]: { label: 'On Hold', bg: 'bg-yellow-100', color: 'text-yellow-700' },
@@ -53,11 +54,13 @@ export function ProjectManagementPage() {
     const { data: projects, isLoading } = useProjectsWithAnalytics()
     const { data: clients } = useClients()
     const createProject = useCreateProject()
+    const updateProject = useUpdateProject()
     const deleteProject = useDeleteProject()
 
     const [searchQuery, setSearchQuery] = useState('')
     const [statusFilter, setStatusFilter] = useState<ProjectStatus | 'all'>('all')
     const [isFormOpen, setIsFormOpen] = useState(false)
+    const [editingProject, setEditingProject] = useState<ProjectWithClientAndAnalytics | null>(null)
     const [deletingProject, setDeletingProject] = useState<ProjectWithClientAndAnalytics | null>(null)
 
     const filteredProjects = projects?.filter((project) => {
@@ -75,8 +78,30 @@ export function ProjectManagementPage() {
         status: ProjectStatus
         dueDate: string
     }) => {
-        await createProject.mutateAsync(data)
+        await createProject.mutateAsync({
+            ...data,
+            startDate: data.status === ProjectStatus.ACTIVE ? new Date().toISOString() : undefined,
+        })
         setIsFormOpen(false)
+    }
+
+    const handleUpdateProject = async (data: {
+        title: string
+        description: string
+        clientId: string
+        status: ProjectStatus
+        startDate?: string
+        dueDate: string
+    }) => {
+        if (!editingProject) return
+        await updateProject.mutateAsync({
+            id: editingProject.id,
+            ...data,
+            startDate: data.status === ProjectStatus.ACTIVE && !editingProject.startDate
+                ? new Date().toISOString()
+                : data.startDate,
+        })
+        setEditingProject(null)
     }
 
     const handleDeleteProject = async () => {
@@ -218,6 +243,14 @@ export function ProjectManagementPage() {
                                                     </button>
                                                 </DropdownMenuTrigger>
                                                 <DropdownMenuContent align="end">
+                                                <DropdownMenuItem
+                                                    onClick={(e) => {
+                                                        e.stopPropagation()
+                                                        setEditingProject(project)
+                                                    }}
+                                                >
+                                                    Edit
+                                                </DropdownMenuItem>
                                                     <DropdownMenuItem
                                                         onClick={(e) => {
                                                             e.stopPropagation()
@@ -292,6 +325,31 @@ export function ProjectManagementPage() {
                 )}
             </main>
 
+            {/* Edit Project Dialog */}
+            <Dialog open={!!editingProject} onOpenChange={() => setEditingProject(null)}>
+                <DialogContent className="sm:max-w-lg">
+                    <DialogHeader>
+                        <DialogTitle className="flex items-center gap-2">
+                            <FolderOpen className="w-5 h-5 text-cobalt" />
+                            Edit Project
+                        </DialogTitle>
+                        <DialogDescription>
+                            Update the project details below.
+                        </DialogDescription>
+                    </DialogHeader>
+                    {editingProject && (
+                        <ProjectForm
+                            clients={clients ?? []}
+                            initialData={editingProject}
+                            onSubmit={handleUpdateProject}
+                            onCancel={() => setEditingProject(null)}
+                            isSubmitting={updateProject.isPending}
+                            isEditing
+                        />
+                    )}
+                </DialogContent>
+            </Dialog>
+
             {/* Create Project Dialog */}
             <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
                 <DialogContent className="sm:max-w-lg">
@@ -342,24 +400,39 @@ export function ProjectManagementPage() {
 // Simple Project Form Component
 interface ProjectFormProps {
     clients: { id: string; name: string }[]
+    initialData?: {
+        title: string
+        description?: string
+        clientId: string
+        status: ProjectStatus
+        dueDate?: string
+    }
+    isEditing?: boolean
     onSubmit: (data: {
         title: string
         description: string
         clientId: string
         status: ProjectStatus
+        startDate?: string
         dueDate: string
     }) => void
     onCancel: () => void
     isSubmitting?: boolean
 }
 
-function ProjectForm({ clients, onSubmit, onCancel, isSubmitting }: ProjectFormProps) {
-    const [formData, setFormData] = useState({
-        title: '',
-        description: '',
-        clientId: '',
-        status: ProjectStatus.ACTIVE,
-        dueDate: '',
+function ProjectForm({ clients, initialData, isEditing, onSubmit, onCancel, isSubmitting }: ProjectFormProps) {
+    const [formData, setFormData] = useState<{
+        title: string
+        description: string
+        clientId: string
+        status: ProjectStatus
+        dueDate: string
+    }>({
+        title: initialData?.title || '',
+        description: initialData?.description || '',
+        clientId: initialData?.clientId || '',
+        status: initialData?.status || ProjectStatus.NOT_STARTED,
+        dueDate: initialData?.dueDate ? initialData.dueDate.split('T')[0] : '',
     })
 
     const handleSubmit = (e: React.FormEvent) => {
@@ -421,13 +494,14 @@ function ProjectForm({ clients, onSubmit, onCancel, isSubmitting }: ProjectFormP
                     </label>
                     <select
                         value={formData.status}
-                        onChange={(e) => setFormData({ ...formData, status: e.target.value })}
+                        onChange={(e) => setFormData({ ...formData, status: e.target.value as ProjectStatus })}
                         className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-cobalt/50"
                     >
-                        <option value="active">Active</option>
-                        <option value="on_hold">On Hold</option>
-                        <option value="completed">Completed</option>
-                        <option value="cancelled">Cancelled</option>
+                        <option value={ProjectStatus.NOT_STARTED}>Not Started</option>
+                        <option value={ProjectStatus.ACTIVE}>Active</option>
+                        <option value={ProjectStatus.ON_HOLD}>On Hold</option>
+                        <option value={ProjectStatus.COMPLETED}>Completed</option>
+                        <option value={ProjectStatus.CANCELLED}>Cancelled</option>
                     </select>
                 </div>
 
@@ -458,7 +532,7 @@ function ProjectForm({ clients, onSubmit, onCancel, isSubmitting }: ProjectFormP
                     disabled={isSubmitting || !formData.title || !formData.clientId}
                     className="flex-1 bg-cobalt hover:bg-cobalt-600"
                 >
-                    {isSubmitting ? 'Creating...' : 'Create Project'}
+                    {isSubmitting ? (isEditing ? 'Saving...' : 'Creating...') : (isEditing ? 'Save Changes' : 'Create Project')}
                 </Button>
             </div>
         </form>

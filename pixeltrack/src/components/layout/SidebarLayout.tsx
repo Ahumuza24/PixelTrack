@@ -72,7 +72,7 @@ const navigation: NavItem[] = [
     },
     {
         label: 'Notifications',
-        path: ROUTES.ADMIN,
+        path: ROUTES.ADMIN + '/notifications',
         icon: Bell,
         roles: [UserRole.ADMIN, UserRole.EMPLOYEE, UserRole.CLIENT],
     },

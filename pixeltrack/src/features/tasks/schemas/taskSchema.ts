@@ -49,7 +49,7 @@ export const taskSchema = z.object({
         .string()
         .min(1, 'Client is required'),
 
-    projectId: z.string().optional().or(z.literal('')),
+    projectId: z.string().optional().transform((val) => val ?? undefined),
 
     assignees: z
         .array(z.string())
@@ -60,7 +60,16 @@ export const taskSchema = z.object({
  * Type inferred from the task schema
  * Used with React Hook Form
  */
-export type TaskFormValues = z.infer<typeof taskSchema>
+export type TaskFormValues = {
+    title: string
+    description: string
+    status: import('@/types').TaskStatus
+    priority: import('@/types').TaskPriority
+    dueDate: string
+    clientId: string
+    projectId?: string
+    assignees: string[]
+}
 
 /**
  * Default values for the task form
@@ -73,7 +82,6 @@ export const defaultTaskValues: TaskFormValues = {
     priority: TaskPriority.MEDIUM,
     dueDate: '',
     clientId: '',
-    projectId: '',
     assignees: [],
 }
 
@@ -98,7 +106,7 @@ export function taskToFormValues(task: {
         priority: task.priority,
         dueDate: task.dueDate ? task.dueDate.split('T')[0] : '',
         clientId: task.clientId,
-        projectId: task.projectId ?? '',
+        projectId: task.projectId === '' ? undefined : task.projectId,
         assignees: task.assignees || [],
     }
 }

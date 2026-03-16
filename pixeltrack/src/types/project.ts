@@ -2,6 +2,7 @@
  * Project status values
  */
 export const ProjectStatus = {
+    NOT_STARTED: 'not_started',
     ACTIVE: 'active',
     COMPLETED: 'completed',
     ON_HOLD: 'on_hold',

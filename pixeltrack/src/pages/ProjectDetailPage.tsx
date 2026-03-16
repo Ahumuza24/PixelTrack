@@ -4,7 +4,7 @@ import {
     FolderKanban, ArrowLeft, Calendar, Clock, AlertCircle,
     Edit2, Trash2, Plus, Loader2, Users, CheckSquare
 } from 'lucide-react'
-import { useProject, useDeleteProject } from '@/features/projects/hooks/useProjects'
+import { useProject, useUpdateProject, useDeleteProject } from '@/features/projects/hooks/useProjects'
 import { useTasks, useCreateTask } from '@/features/tasks/hooks/useTasks'
 import { useClients } from '@/features/clients/hooks/useClients'
 import { useUsers } from '@/features/users/hooks/useUsers'
@@ -12,6 +12,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Progress } from '@/components/ui/progress'
+import { Input } from '@/components/ui/input'
 import {
     Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle,
 } from '@/components/ui/dialog'
@@ -25,6 +26,7 @@ import type { ProjectStatus } from '@/types'
 import { TaskStatus, UserRole } from '@/types'
 
 const statusConfig: Record<ProjectStatus, { label: string; bg: string; color: string }> = {
+    not_started: { label: 'Not Started', bg: 'bg-slate-100', color: 'text-slate-600' },
     active: { label: 'Active', bg: 'bg-blue-100', color: 'text-blue-600' },
     completed: { label: 'Completed', bg: 'bg-green-100', color: 'text-green-600' },
     on_hold: { label: 'On Hold', bg: 'bg-yellow-100', color: 'text-yellow-600' },
@@ -40,6 +42,7 @@ export function ProjectDetailPage() {
     const { data: clients } = useClients()
     const { data: users } = useUsers()
     const deleteProject = useDeleteProject()
+    const updateProject = useUpdateProject()
     const createTask = useCreateTask()
 
     const [isEditOpen, setIsEditOpen] = useState(false)
@@ -87,6 +90,24 @@ export function ProjectDetailPage() {
             await deleteProject.mutateAsync(projectId)
             navigate('/admin/projects')
         }
+    }
+
+    const handleUpdateProject = async (data: {
+        title: string
+        description: string
+        clientId: string
+        status: ProjectStatus
+        dueDate: string
+    }) => {
+        if (!projectId) return
+        await updateProject.mutateAsync({
+            id: projectId,
+            ...data,
+            startDate: data.status === 'active' && !project?.startDate
+                ? new Date().toISOString()
+                : undefined,
+        })
+        setIsEditOpen(false)
     }
 
     const handleCreateTask = async (values: TaskFormValues) => {
@@ -336,18 +357,28 @@ export function ProjectDetailPage() {
                 </div>
             </div>
 
-            {/* Edit Project Dialog - Placeholder */}
+            {/* Edit Project Dialog */}
             <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
-                <DialogContent>
+                <DialogContent className="sm:max-w-lg">
                     <DialogHeader>
-                        <DialogTitle>Edit Project</DialogTitle>
+                        <DialogTitle className="flex items-center gap-2">
+                            <FolderKanban className="w-5 h-5 text-[#0048ad]" />
+                            Edit Project
+                        </DialogTitle>
                         <DialogDescription>
-                            Project editing functionality coming soon.
+                            Update the project details below.
                         </DialogDescription>
                     </DialogHeader>
-                    <div className="flex justify-end">
-                        <Button onClick={() => setIsEditOpen(false)}>Close</Button>
-                    </div>
+                    {project && (
+                        <ProjectForm
+                            clients={clients ?? []}
+                            initialData={project}
+                            onSubmit={handleUpdateProject}
+                            onCancel={() => setIsEditOpen(false)}
+                            isSubmitting={updateProject.isPending}
+                            isEditing
+                        />
+                    )}
                 </DialogContent>
             </Dialog>
 
@@ -395,5 +426,146 @@ export function ProjectDetailPage() {
                 </DialogContent>
             </Dialog>
         </div>
+    )
+}
+
+// Project Form Component for editing
+interface ProjectFormProps {
+    clients: { id: string; name: string }[]
+    initialData?: {
+        title: string
+        description?: string
+        clientId: string
+        status: ProjectStatus
+        dueDate?: string
+    }
+    isEditing?: boolean
+    onSubmit: (data: {
+        title: string
+        description: string
+        clientId: string
+        status: ProjectStatus
+        dueDate: string
+    }) => void
+    onCancel: () => void
+    isSubmitting?: boolean
+}
+
+function ProjectForm({ clients, initialData, isEditing, onSubmit, onCancel, isSubmitting }: ProjectFormProps) {
+    const [formData, setFormData] = useState<{
+        title: string
+        description: string
+        clientId: string
+        status: ProjectStatus
+        dueDate: string
+    }>({
+        title: initialData?.title || '',
+        description: initialData?.description || '',
+        clientId: initialData?.clientId || '',
+        status: initialData?.status || 'not_started',
+        dueDate: initialData?.dueDate ? initialData.dueDate.split('T')[0] : '',
+    })
+
+    const handleSubmit = (e: React.FormEvent) => {
+        e.preventDefault()
+        if (!formData.title || !formData.clientId) return
+        onSubmit(formData)
+    }
+
+    return (
+        <form onSubmit={handleSubmit} className="space-y-4">
+            <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">
+                    Project Title *
+                </label>
+                <Input
+                    value={formData.title}
+                    onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                    placeholder="e.g., Brand Design, Website Redesign"
+                    required
+                />
+            </div>
+
+            <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">
+                    Client *
+                </label>
+                <select
+                    value={formData.clientId}
+                    onChange={(e) => setFormData({ ...formData, clientId: e.target.value })}
+                    className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-cobalt/50"
+                    required
+                >
+                    <option value="">Select a client</option>
+                    {clients.map((client) => (
+                        <option key={client.id} value={client.id}>
+                            {client.name}
+                        </option>
+                    ))}
+                </select>
+            </div>
+
+            <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">
+                    Description
+                </label>
+                <textarea
+                    value={formData.description}
+                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                    placeholder="Brief description of the project scope..."
+                    rows={3}
+                    className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-cobalt/50 resize-none"
+                />
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+                <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">
+                        Status
+                    </label>
+                    <select
+                        value={formData.status}
+                        onChange={(e) => setFormData({ ...formData, status: e.target.value as ProjectStatus })}
+                        className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-cobalt/50"
+                    >
+                        <option value="not_started">Not Started</option>
+                        <option value="active">Active</option>
+                        <option value="on_hold">On Hold</option>
+                        <option value="completed">Completed</option>
+                        <option value="cancelled">Cancelled</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">
+                        Due Date
+                    </label>
+                    <Input
+                        type="date"
+                        value={formData.dueDate}
+                        onChange={(e) => setFormData({ ...formData, dueDate: e.target.value })}
+                    />
+                </div>
+            </div>
+
+            <div className="flex gap-3 pt-4 border-t">
+                <Button
+                    type="button"
+                    variant="outline"
+                    onClick={onCancel}
+                    disabled={isSubmitting}
+                    className="flex-1"
+                >
+                    Cancel
+                </Button>
+                <Button
+                    type="submit"
+                    disabled={isSubmitting || !formData.title || !formData.clientId}
+                    className="flex-1 bg-[#0048ad] hover:bg-[#0048ad]/90"
+                >
+                    {isSubmitting ? (isEditing ? 'Saving...' : 'Creating...') : (isEditing ? 'Save Changes' : 'Create Project')}
+                </Button>
+            </div>
+        </form>
     )
 }

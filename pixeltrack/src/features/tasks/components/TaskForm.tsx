@@ -3,20 +3,6 @@
  *
  * @module features/tasks/components/TaskForm
  * @description React Hook Form component for creating and editing tasks.
- * Includes fields for title, description, status, priority, due date,
- * client assignment, and employee assignees.
- *
- * @example
- * ```tsx
- * <TaskForm
- *   task={existingTask}
- *   clients={clients}
- *   employees={employees}
- *   onSubmit={handleSubmit}
- *   onCancel={() => setIsOpen(false)}
- *   isSubmitting={false}
- * />
- * ```
  */
 
 import { useEffect, useMemo } from 'react'
@@ -39,27 +25,13 @@ import type { Task, TaskStatus, TaskPriority, Client, UserProfile, Project } fro
 import { TaskStatus as TaskStatusConst, TaskPriority as TaskPriorityConst } from '@/types'
 
 interface TaskFormProps {
-    /** Existing task data when editing, undefined when creating */
     task?: Task
-    /** Initial values for create flow (prefill) */
     initialValues?: Partial<TaskFormValues>
-
-    /** Available clients for selection */
     clients: Client[]
-
-    /** Available projects for optional association */
     projects: Project[]
-
-    /** Available employees for assignment */
     employees: UserProfile[]
-
-    /** Form submission handler */
     onSubmit: (data: TaskFormValues) => void
-
-    /** Cancel handler */
     onCancel: () => void
-
-    /** Whether the form is currently submitting */
     isSubmitting?: boolean
 }
 
@@ -104,9 +76,7 @@ export function TaskForm({
     isSubmitting = false,
 }: TaskFormProps) {
     const baseValues = useMemo(() => {
-        if (task) {
-            return taskToFormValues(task)
-        }
+        if (task) return taskToFormValues(task)
         return { ...defaultTaskValues, ...initialValues }
     }, [task, initialValues])
 
@@ -129,7 +99,7 @@ export function TaskForm({
 
     useEffect(() => {
         if (selectedProjectId) {
-            const match = projects.find((project) => project.id === selectedProjectId)
+            const match = projects.find((p) => p.id === selectedProjectId)
             if (match && form.getValues('clientId') !== match.clientId) {
                 form.setValue('clientId', match.clientId, { shouldValidate: true })
             }
@@ -143,10 +113,10 @@ export function TaskForm({
     const handleSubmit = form.handleSubmit(onSubmit)
 
     return (
-        <form onSubmit={handleSubmit} className="space-y-6">
+        <form onSubmit={handleSubmit} className="space-y-4 w-full">
             {/* Title */}
-            <div className="space-y-2">
-                <Label htmlFor="title" className="flex items-center gap-2">
+            <div className="space-y-1.5">
+                <Label htmlFor="title" className="flex items-center gap-2 text-sm">
                     <Type className="w-4 h-4" />
                     Task Title
                 </Label>
@@ -154,36 +124,35 @@ export function TaskForm({
                     id="title"
                     placeholder="Enter task title..."
                     {...form.register('title')}
-                    className={form.formState.errors.title ? 'border-red-500' : ''}
+                    className={`h-9 w-full ${form.formState.errors.title ? 'border-red-500' : ''}`}
                 />
                 {form.formState.errors.title && (
-                    <p className="text-sm text-red-500">{form.formState.errors.title.message}</p>
+                    <p className="text-xs text-red-500">{form.formState.errors.title.message}</p>
                 )}
             </div>
 
             {/* Description */}
-            <div className="space-y-2">
-                <Label htmlFor="description" className="flex items-center gap-2">
+            <div className="space-y-1.5">
+                <Label htmlFor="description" className="flex items-center gap-2 text-sm">
                     <AlignLeft className="w-4 h-4" />
                     Description
                 </Label>
                 <Textarea
                     id="description"
                     placeholder="Describe the task requirements..."
-                    rows={4}
+                    rows={2}
                     {...form.register('description')}
-                    className={form.formState.errors.description ? 'border-red-500' : ''}
+                    className={`w-full resize-none ${form.formState.errors.description ? 'border-red-500' : ''}`}
                 />
                 {form.formState.errors.description && (
-                    <p className="text-sm text-red-500">{form.formState.errors.description.message}</p>
+                    <p className="text-xs text-red-500">{form.formState.errors.description.message}</p>
                 )}
             </div>
 
-            {/* Status and Priority Row */}
-            <div className="grid grid-cols-2 gap-4">
-                {/* Status */}
-                <div className="space-y-2">
-                    <Label htmlFor="status" className="flex items-center gap-2">
+            {/* Status and Priority */}
+            <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1.5">
+                    <Label htmlFor="status" className="flex items-center gap-2 text-sm">
                         <CheckSquare className="w-4 h-4" />
                         Status
                     </Label>
@@ -191,12 +160,12 @@ export function TaskForm({
                         value={statusValue}
                         onValueChange={(value) => form.setValue('status', value as TaskStatus)}
                     >
-                        <SelectTrigger id="status" className={form.formState.errors.status ? 'border-red-500' : ''}>
+                        <SelectTrigger id="status" className={`h-9 w-full text-sm ${form.formState.errors.status ? 'border-red-500' : ''}`}>
                             <SelectValue placeholder="Select status" />
                         </SelectTrigger>
                         <SelectContent>
                             {Object.values(TaskStatusConst).map((status) => (
-                                <SelectItem key={status} value={status}>
+                                <SelectItem key={status} value={status} className="text-sm">
                                     <span className="flex items-center gap-2">
                                         <span className={`w-2 h-2 rounded-full ${statusColors[status].split(' ')[0]}`} />
                                         {statusLabels[status]}
@@ -205,14 +174,10 @@ export function TaskForm({
                             ))}
                         </SelectContent>
                     </Select>
-                    {form.formState.errors.status && (
-                        <p className="text-sm text-red-500">{form.formState.errors.status.message}</p>
-                    )}
                 </div>
 
-                {/* Priority */}
-                <div className="space-y-2">
-                    <Label htmlFor="priority" className="flex items-center gap-2">
+                <div className="space-y-1.5">
+                    <Label htmlFor="priority" className="flex items-center gap-2 text-sm">
                         <Flag className="w-4 h-4" />
                         Priority
                     </Label>
@@ -220,12 +185,12 @@ export function TaskForm({
                         value={priorityValue}
                         onValueChange={(value) => form.setValue('priority', value as TaskPriority)}
                     >
-                        <SelectTrigger id="priority" className={form.formState.errors.priority ? 'border-red-500' : ''}>
+                        <SelectTrigger id="priority" className={`h-9 w-full text-sm ${form.formState.errors.priority ? 'border-red-500' : ''}`}>
                             <SelectValue placeholder="Select priority" />
                         </SelectTrigger>
                         <SelectContent>
                             {Object.values(TaskPriorityConst).map((priority) => (
-                                <SelectItem key={priority} value={priority}>
+                                <SelectItem key={priority} value={priority} className="text-sm">
                                     <span className="flex items-center gap-2">
                                         <span className={`px-2 py-0.5 rounded text-xs ${priorityColors[priority]}`}>
                                             {priorityLabels[priority]}
@@ -235,15 +200,12 @@ export function TaskForm({
                             ))}
                         </SelectContent>
                     </Select>
-                    {form.formState.errors.priority && (
-                        <p className="text-sm text-red-500">{form.formState.errors.priority.message}</p>
-                    )}
                 </div>
             </div>
 
             {/* Due Date */}
-            <div className="space-y-2">
-                <Label htmlFor="dueDate" className="flex items-center gap-2">
+            <div className="space-y-1.5">
+                <Label htmlFor="dueDate" className="flex items-center gap-2 text-sm">
                     <Calendar className="w-4 h-4" />
                     Due Date
                 </Label>
@@ -251,33 +213,30 @@ export function TaskForm({
                     id="dueDate"
                     type="date"
                     {...form.register('dueDate')}
-                    className={form.formState.errors.dueDate ? 'border-red-500' : ''}
+                    className={`h-9 w-full ${form.formState.errors.dueDate ? 'border-red-500' : ''}`}
                 />
-                {form.formState.errors.dueDate && (
-                    <p className="text-sm text-red-500">{form.formState.errors.dueDate.message}</p>
-                )}
             </div>
 
-            {/* Project Association */}
-            <div className="space-y-2">
-                <Label htmlFor="projectId" className="flex items-center gap-2">
+            {/* Project */}
+            <div className="space-y-1.5">
+                <Label htmlFor="projectId" className="flex items-center gap-2 text-sm">
                     <Folder className="w-4 h-4" />
                     Project (optional)
                 </Label>
                 <Select
-                    value={selectedProjectId ?? ''}
-                    onValueChange={(value) => form.setValue('projectId', value)}
+                    value={selectedProjectId || 'none'}
+                    onValueChange={(value) => form.setValue('projectId', value === 'none' ? '' : value)}
                 >
-                    <SelectTrigger id="projectId">
+                    <SelectTrigger id="projectId" className="h-9 w-full text-sm">
                         <SelectValue placeholder="Select a project (optional)" />
                     </SelectTrigger>
                     <SelectContent>
-                        <SelectItem value="">Standalone Task</SelectItem>
+                        <SelectItem value="none" className="text-sm">Standalone Task</SelectItem>
                         {projects.map((project) => (
-                            <SelectItem key={project.id} value={project.id}>
-                                <div className="flex flex-col">
-                                    <span className="font-medium">{project.title}</span>
-                                    <span className="text-xs text-slate-500">
+                            <SelectItem key={project.id} value={project.id} className="text-sm">
+                                <div className="flex flex-col max-w-[260px]">
+                                    <span className="font-medium truncate">{project.title}</span>
+                                    <span className="text-xs text-slate-500 truncate">
                                         {clientLookup.get(project.clientId)?.name || 'Unknown client'}
                                     </span>
                                 </div>
@@ -285,20 +244,11 @@ export function TaskForm({
                         ))}
                     </SelectContent>
                 </Select>
-                {selectedProjectId ? (
-                    <p className="text-xs text-slate-500">
-                        Client automatically set from the selected project.
-                    </p>
-                ) : (
-                    <p className="text-xs text-slate-500">
-                        Leave blank for standalone / one-off tasks.
-                    </p>
-                )}
             </div>
 
-            {/* Client Assignment */}
-            <div className="space-y-2">
-                <Label htmlFor="clientId" className="flex items-center gap-2">
+            {/* Client */}
+            <div className="space-y-1.5">
+                <Label htmlFor="clientId" className="flex items-center gap-2 text-sm">
                     <Building2 className="w-4 h-4" />
                     Client
                 </Label>
@@ -307,38 +257,35 @@ export function TaskForm({
                     onValueChange={(value) => form.setValue('clientId', value)}
                     disabled={Boolean(selectedProjectId)}
                 >
-                    <SelectTrigger id="clientId" className={form.formState.errors.clientId ? 'border-red-500' : ''}>
+                    <SelectTrigger id="clientId" className={`h-9 w-full text-sm ${form.formState.errors.clientId ? 'border-red-500' : ''}`}>
                         <SelectValue placeholder="Select a client" />
                     </SelectTrigger>
                     <SelectContent>
                         {clients.map((client) => (
-                            <SelectItem key={client.id} value={client.id}>
+                            <SelectItem key={client.id} value={client.id} className="text-sm">
                                 {client.name}
                             </SelectItem>
                         ))}
                     </SelectContent>
                 </Select>
-                {form.formState.errors.clientId && (
-                    <p className="text-sm text-red-500">{form.formState.errors.clientId.message}</p>
-                )}
             </div>
 
             {/* Assignees */}
-            <div className="space-y-2">
-                <Label className="flex items-center gap-2">
+            <div className="space-y-1.5">
+                <Label className="flex items-center gap-2 text-sm">
                     <Users className="w-4 h-4" />
                     Assignees
                 </Label>
-                <div className="border rounded-md p-3 space-y-2 max-h-40 overflow-y-auto">
+                <div className="border rounded-md p-2 max-h-28 overflow-y-auto">
                     {employees.length === 0 ? (
-                        <p className="text-sm text-slate-500">No employees available</p>
+                        <p className="text-sm text-slate-500 px-2 py-1">No employees available</p>
                     ) : (
                         employees.map((employee) => {
                             const isSelected = assigneeSelection.includes(employee.uid)
                             return (
                                 <label
                                     key={employee.uid}
-                                    className="flex items-center gap-3 p-2 rounded-lg hover:bg-slate-50 cursor-pointer"
+                                    className="flex items-center gap-2 px-2 py-1.5 rounded hover:bg-slate-50 cursor-pointer"
                                 >
                                     <input
                                         type="checkbox"
@@ -348,42 +295,27 @@ export function TaskForm({
                                             if (e.target.checked) {
                                                 form.setValue('assignees', [...current, employee.uid])
                                             } else {
-                                                form.setValue(
-                                                    'assignees',
-                                                    current.filter((id) => id !== employee.uid)
-                                                )
+                                                form.setValue('assignees', current.filter((id) => id !== employee.uid))
                                             }
                                         }}
-                                        className="w-4 h-4 rounded border-slate-300 text-cobalt focus:ring-cobalt"
+                                        className="w-4 h-4 rounded border-slate-300 text-cobalt focus:ring-cobalt shrink-0"
                                     />
-                                    <span className="text-sm font-medium">{employee.displayName}</span>
-                                    <span className="text-xs text-slate-500">{employee.email}</span>
+                                    <div className="flex flex-col min-w-0 overflow-hidden">
+                                        <span className="text-sm font-medium truncate">{employee.displayName || employee.email}</span>
+                                    </div>
                                 </label>
                             )
                         })
                     )}
                 </div>
-                {form.formState.errors.assignees && (
-                    <p className="text-sm text-red-500">{form.formState.errors.assignees.message}</p>
-                )}
             </div>
 
             {/* Actions */}
-            <div className="flex gap-3 pt-4 border-t">
-                <Button
-                    type="button"
-                    variant="outline"
-                    onClick={onCancel}
-                    disabled={isSubmitting}
-                    className="flex-1"
-                >
+            <div className="flex gap-3 pt-3 border-t">
+                <Button type="button" variant="outline" onClick={onCancel} disabled={isSubmitting} className="flex-1 h-9 text-sm">
                     Cancel
                 </Button>
-                <Button
-                    type="submit"
-                    disabled={isSubmitting}
-                    className="flex-1 bg-cobalt hover:bg-cobalt-600"
-                >
+                <Button type="submit" disabled={isSubmitting} className="flex-1 h-9 text-sm bg-cobalt hover:bg-cobalt-600">
                     {isSubmitting ? 'Saving...' : task ? 'Update Task' : 'Create Task'}
                 </Button>
             </div>
