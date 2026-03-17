@@ -4,3 +4,4 @@
 
 firestore.rules
 /docs
+pixeltrack/supabase/task_comments_migration.sql

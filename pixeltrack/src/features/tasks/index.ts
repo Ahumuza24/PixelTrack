@@ -15,5 +15,7 @@ export {
     useUpdateTaskStatus,
 } from './hooks/useTasks'
 
+export { useTaskComments, useCreateTaskComment, useDeleteTaskComment } from './hooks/useTaskComments'
+
 export { taskSchema, defaultTaskValues, taskToFormValues } from './schemas/taskSchema'
 export type { TaskFormValues } from './schemas/taskSchema'

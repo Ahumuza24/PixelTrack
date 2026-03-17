@@ -14,18 +14,15 @@ import { useState } from 'react'
 import {
     ArrowLeft,
     Calendar,
-    Flag,
     Users,
     Building2,
     Clock,
     Edit2,
     Trash2,
-    MessageSquare,
     CheckSquare,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import {
     Dialog,
     DialogContent,
@@ -53,6 +50,7 @@ import { useAuth } from '@/features/auth/useAuth'
 import type { TaskStatus, TaskPriority } from '@/types'
 import { TaskStatus as TaskStatusConst, TaskPriority as TaskPriorityConst, UserRole, getTaskProgress } from '@/types'
 import { TaskFilesSection } from '@/features/tasks/components/TaskFilesSection'
+import { TaskCommentsSection } from '@/features/tasks/components/TaskCommentsSection'
 import { TaskForm } from '@/features/tasks/components/TaskForm'
 import type { TaskFormValues } from '@/features/tasks/schemas/taskSchema'
 
@@ -98,14 +96,8 @@ export function TaskDetailPage() {
     const updateTask = useUpdateTask()
     const deleteTask = useDeleteTask()
 
-    const [activeTab, setActiveTab] = useState('overview')
     const [isEditOpen, setIsEditOpen] = useState(false)
     const [isDeleteOpen, setIsDeleteOpen] = useState(false)
-
-    // Get related data
-    const client = clients?.find((c) => c.id === task?.clientId)
-    const assignees = users?.filter((u) => task?.assignees.includes(u.uid)) || []
-    const employees = users?.filter((u) => u.role !== UserRole.CLIENT) || []
 
     // Loading state
     if (isLoading) {
@@ -143,6 +135,12 @@ export function TaskDetailPage() {
         )
     }
 
+    // Get related data now that task exists
+    const client = clients?.find((c) => c.id === task.clientId)
+    const assignees = users?.filter((u) => task.assignees.includes(u.uid)) || []
+    const employees = users?.filter((u) => u.role !== UserRole.CLIENT) || []
+    const project = projects?.find((p) => p.id === task.projectId)
+
     const canEdit = user?.role === UserRole.ADMIN ||
         (user?.role === UserRole.EMPLOYEE && task.assignees.includes(user.uid))
 
@@ -162,13 +160,11 @@ export function TaskDetailPage() {
 
     return (
         <SidebarLayout>
-            <div className="min-h-screen bg-slate-50">
-            {/* Header */}
-            <div className="bg-white border-b border-slate-200">
-                <div className="max-w-4xl mx-auto px-4 sm:px-6 py-4">
-                    <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
+            <div className="min-h-screen bg-gradient-to-b from-[#f4f7fb] via-white to-white">
+                <div className="bg-white/80 border-b border-slate-200 backdrop-blur">
+                    <div className="max-w-5xl mx-auto px-4 sm:px-6 py-4 flex items-center justify-between">
                         <div>
-                            <h1 className="text-2xl font-bold text-slate-900">{task.title}</h1>
+                            <p className="text-sm font-semibold text-slate-500 uppercase tracking-widest">Task Detail</p>
                         </div>
                         {canEdit && (
                             <div className="flex gap-2">
@@ -189,211 +185,228 @@ export function TaskDetailPage() {
                         )}
                     </div>
                 </div>
-            </div>
 
-            {/* Content */}
-            <div className="max-w-4xl mx-auto px-4 sm:px-6 py-6">
-                <Tabs value={activeTab} onValueChange={setActiveTab}>
-                    <TabsList className="mb-6">
-                        <TabsTrigger value="overview">Overview</TabsTrigger>
-                        <TabsTrigger value="files">
-                            Files
-                            <span className="ml-2 text-xs bg-slate-200 px-1.5 py-0.5 rounded">
-                                {taskFiles?.length ?? 0}
-                            </span>
-                        </TabsTrigger>
-                        <TabsTrigger value="comments">
-                            Comments
-                            <span className="ml-2 text-xs bg-slate-200 px-1.5 py-0.5 rounded">0</span>
-                        </TabsTrigger>
-                        <TabsTrigger value="activity">Activity</TabsTrigger>
-                    </TabsList>
+                <div className="max-w-5xl mx-auto px-4 sm:px-6 py-8 space-y-8">
 
-                    <TabsContent value="overview" className="space-y-6">
-                        {/* Description */}
-                        <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
-                            <h2 className="text-lg font-semibold text-slate-900 mb-4">Description</h2>
-                            <p className="text-slate-700 whitespace-pre-wrap">{task.description}</p>
+
+                    <div>
+                        <h1 className="text-3xl font-bold text-slate-900 tracking-tight">{task.title}</h1>
+                        <p className="text-base text-slate-600 mt-3 whitespace-pre-wrap">
+                            {task.description || 'No description added yet.'}
+                        </p>
+                    </div>
+                    <section className="grid gap-4 md:grid-cols-3">
+                        <div className="rounded-2xl border border-slate-100 bg-white p-5 shadow-sm">
+                            <div className="flex items-center gap-3 mb-3">
+                                <Calendar className="w-5 h-5 text-cobalt" />
+                                <span className="text-sm font-semibold text-slate-500">Due Date</span>
+                            </div>
+                            <p className="text-lg font-semibold text-slate-900">
+                                {new Date(task.dueDate).toLocaleDateString(undefined, {
+                                    weekday: 'long',
+                                    month: 'long',
+                                    day: 'numeric',
+                                })}
+                            </p>
+                            <p className="text-xs text-slate-500 mt-2">Stay on track to avoid slipping deadlines.</p>
                         </div>
 
-                        {/* Priority & Progress */}
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                            <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-5">
-                                <div className="flex items-center gap-2 text-sm text-slate-500 mb-3">
-                                    <Flag className="w-4 h-4" />
-                                    Priority
+                        <div className="rounded-2xl border border-slate-100 bg-white p-5 shadow-sm">
+                            <div className="flex items-center justify-between mb-3">
+                                <div className="flex items-center gap-2 text-sm text-slate-500">
+                                    <CheckSquare className="w-4 h-4" />
+                                    Progress
                                 </div>
-                                <div className={`inline-flex items-center gap-2 rounded-full px-3 py-1 text-sm font-medium ${priorityColors[task.priority]}`}>
-                                    <span>{priorityLabels[task.priority]}</span>
-                                </div>
-                                <p className="text-xs text-slate-500 mt-3">
-                                    Higher priority tasks surface in dashboards and reminders.
-                                </p>
+                                <span className="text-sm font-semibold text-slate-900">{progressPercent}%</span>
                             </div>
+                            <div className="h-2 rounded-full bg-slate-100 overflow-hidden">
+                                <div
+                                    className="h-full bg-cobalt rounded-full transition-all"
+                                    style={{ width: `${progressPercent}%` }}
+                                />
+                            </div>
+                            <p className="text-xs text-slate-500 mt-3 flex items-center gap-2">
+                                <span>Current status:</span>
+                                <Badge className={statusColors[task.status]}>{statusLabels[task.status]}</Badge>
+                            </p>
+                        </div>
 
-                            <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-5">
-                                <div className="flex items-center justify-between mb-3">
-                                    <div className="flex items-center gap-2 text-sm text-slate-500">
-                                        <CheckSquare className="w-4 h-4" />
-                                        Progress
+                        <div className="rounded-2xl border border-slate-100 bg-white p-5 shadow-sm">
+                            <div className="flex items-center gap-3 mb-3">
+                                <Building2 className="w-5 h-5 text-cobalt" />
+                                <span className="text-sm font-semibold text-slate-500">Client</span>
+                            </div>
+                            <p className="text-lg font-semibold text-slate-900">{client?.name || 'Unknown Client'}</p>
+                            <p className="text-xs text-slate-500 mt-2">
+                                {project ? `Part of ${project.title}` : 'Standalone task'}
+                            </p>
+                        </div>
+                    </section>
+
+                    <section className="grid gap-6 lg:grid-cols-[2fr_1fr]">
+                        <div className="space-y-6">
+                            <div className="rounded-2xl border border-slate-100 bg-white p-6 shadow-sm">
+                                <div className="flex items-center justify-between mb-4">
+                                    <div>
+                                        <h2 className="text-lg font-semibold text-slate-900">Design Files</h2>
+                                        <p className="text-sm text-slate-500">Uploads and external links shared with the client.</p>
                                     </div>
-                                    <span className="text-sm font-semibold text-slate-900">{progressPercent}%</span>
+                                    <Badge variant="secondary">{taskFiles?.length ?? 0} files</Badge>
                                 </div>
-                                <div className="h-2 rounded-full bg-slate-100 overflow-hidden">
-                                    <div
-                                        className="h-full bg-cobalt rounded-full transition-all"
-                                        style={{ width: `${progressPercent}%` }}
-                                    />
+                                <TaskFilesSection
+                                    taskId={task.id}
+                                    files={taskFiles}
+                                    isLoading={isTaskFilesLoading}
+                                    canManageFiles={canManageFiles}
+                                    currentUserId={user?.uid ?? null}
+                                    currentUserRole={user?.role ?? UserRole.CLIENT}
+                                />
+                            </div>
+
+                            <TaskCommentsSection
+                                taskId={task.id}
+                                users={users || []}
+                                currentUser={user}
+                            />
+
+                            <div className="rounded-2xl border border-slate-100 bg-white p-6 shadow-sm">
+                                <div className="flex items-center gap-3 mb-4">
+                                    <Clock className="w-5 h-5 text-cobalt" />
+                                    <div>
+                                        <h3 className="text-lg font-semibold text-slate-900">Activity Highlights</h3>
+                                        <p className="text-sm text-slate-500">Automatic snapshots of key events.</p>
+                                    </div>
                                 </div>
-                                <div className="mt-3 inline-flex items-center gap-2">
-                                    <span className="text-xs text-slate-500">Current status:</span>
-                                    <Badge className={statusColors[task.status]}>
-                                        {statusLabels[task.status]}
-                                    </Badge>
+                                <div className="space-y-4">
+                                    <div className="flex items-start gap-3">
+                                        <div className="w-2 h-2 mt-2 rounded-full bg-cobalt" />
+                                        <div>
+                                            <p className="text-sm font-medium text-slate-900">Task created</p>
+                                            <p className="text-xs text-slate-500">
+                                                {new Date(task.createdAt).toLocaleString()}
+                                            </p>
+                                        </div>
+                                    </div>
+                                    <div className="flex items-start gap-3">
+                                        <div className="w-2 h-2 mt-2 rounded-full bg-emerald-500" />
+                                        <div>
+                                            <p className="text-sm font-medium text-slate-900">Last updated</p>
+                                            <p className="text-xs text-slate-500">
+                                                {new Date(task.updatedAt).toLocaleString()}
+                                            </p>
+                                        </div>
+                                    </div>
+                                    <div className="flex items-start gap-3">
+                                        <div className="w-2 h-2 mt-2 rounded-full bg-amber-500" />
+                                        <div>
+                                            <p className="text-sm font-medium text-slate-900">Current status</p>
+                                            <p className="text-xs text-slate-500">{statusLabels[task.status]}</p>
+                                        </div>
+                                    </div>
                                 </div>
-                                <p className="text-xs text-slate-500 mt-3">
-                                    Progress auto-updates based on the current task status.
-                                </p>
                             </div>
                         </div>
 
-                        {/* Details Grid */}
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                            {/* Client */}
-                            <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-4">
-                                <div className="flex items-center gap-2 text-sm text-slate-500 mb-2">
-                                    <Building2 className="w-4 h-4" />
-                                    Client
-                                </div>
-                                <p className="font-medium text-slate-900">
-                                    {client?.name || 'Unknown Client'}
-                                </p>
-                            </div>
+                        <div className="space-y-6">
 
-                            {/* Due Date */}
-                            <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-4">
-                                <div className="flex items-center gap-2 text-sm text-slate-500 mb-2">
-                                    <Calendar className="w-4 h-4" />
-                                    Due Date
-                                </div>
-                                <p className="font-medium text-slate-900">
-                                    {new Date(task.dueDate).toLocaleDateString(undefined, {
-                                        weekday: 'long',
-                                        year: 'numeric',
-                                        month: 'long',
-                                        day: 'numeric',
-                                    })}
-                                </p>
-                            </div>
 
-                            {/* Assignees */}
-                            <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-4">
-                                <div className="flex items-center gap-2 text-sm text-slate-500 mb-2">
-                                    <Users className="w-4 h-4" />
-                                    Assignees ({assignees.length})
+                            <div className="rounded-2xl border border-slate-100 bg-white p-6 shadow-sm">
+                                <div className="flex items-center gap-3 mb-4">
+                                    <Users className="w-5 h-5 text-cobalt" />
+                                    <div>
+                                        <h3 className="text-lg font-semibold text-slate-900">Team</h3>
+                                        <p className="text-sm text-slate-500">{assignees.length} assignee(s)</p>
+                                    </div>
                                 </div>
                                 <div className="flex flex-wrap gap-2">
                                     {assignees.length > 0 ? (
                                         assignees.map((assignee) => (
                                             <div
                                                 key={assignee.uid}
-                                                className="flex items-center gap-2 bg-slate-100 rounded-full px-3 py-1"
+                                                className="flex items-center gap-2 rounded-full bg-slate-100 px-3 py-1"
                                             >
-                                                <div className="w-6 h-6 bg-cobalt rounded-full flex items-center justify-center text-white text-xs font-medium">
+                                                <div className="w-7 h-7 rounded-full bg-cobalt text-white text-xs font-semibold flex items-center justify-center">
                                                     {assignee.displayName.charAt(0).toUpperCase()}
                                                 </div>
-                                                <span className="text-sm font-medium">{assignee.displayName}</span>
+                                                <span className="text-sm font-medium text-slate-800">
+                                                    {assignee.displayName}
+                                                </span>
                                             </div>
                                         ))
                                     ) : (
-                                        <span className="text-slate-400 text-sm">No assignees</span>
+                                        <p className="text-sm text-slate-500">No assignees yet.</p>
                                     )}
                                 </div>
                             </div>
 
-                            {/* Created */}
-                            <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-4">
-                                <div className="flex items-center gap-2 text-sm text-slate-500 mb-2">
-                                    <Clock className="w-4 h-4" />
-                                    Created
+                            <div className="rounded-2xl border border-slate-100 bg-white p-6 shadow-sm">
+                                <div className="flex items-center gap-3 mb-4">
+                                    <Clock className="w-5 h-5 text-cobalt" />
+                                    <div>
+                                        <h3 className="text-lg font-semibold text-slate-900">Timeline</h3>
+                                        <p className="text-sm text-slate-500">Key timestamps</p>
+                                    </div>
                                 </div>
-                                <p className="font-medium text-slate-900">
-                                    {new Date(task.createdAt).toLocaleDateString()}
-                                </p>
+                                <dl className="space-y-3 text-sm">
+                                    <div className="flex items-center justify-between">
+                                        <dt className="text-slate-500">Created</dt>
+                                        <dd className="font-medium text-slate-900">
+                                            {new Date(task.createdAt).toLocaleDateString()}
+                                        </dd>
+                                    </div>
+                                    <div className="flex items-center justify-between">
+                                        <dt className="text-slate-500">Last Updated</dt>
+                                        <dd className="font-medium text-slate-900">
+                                            {new Date(task.updatedAt).toLocaleDateString()}
+                                        </dd>
+                                    </div>
+                                </dl>
                             </div>
                         </div>
-                    </TabsContent>
+                    </section>
+                </div>
 
-                    <TabsContent value="files">
-                        <TaskFilesSection
-                            taskId={task.id}
-                            files={taskFiles}
-                            isLoading={isTaskFilesLoading}
-                            canManageFiles={canManageFiles}
-                            currentUserId={user?.uid ?? null}
-                            currentUserRole={user?.role ?? UserRole.CLIENT}
+                <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
+                    <DialogContent className="max-w-2xl">
+                        <DialogHeader>
+                            <DialogTitle>Edit Task</DialogTitle>
+                            <DialogDescription>Update the task details below.</DialogDescription>
+                        </DialogHeader>
+                        <TaskForm
+                            task={task}
+                            clients={clients || []}
+                            projects={projects || []}
+                            employees={employees}
+                            onSubmit={handleEditSubmit}
+                            onCancel={() => setIsEditOpen(false)}
+                            isSubmitting={updateTask.isPending}
                         />
-                    </TabsContent>
+                    </DialogContent>
+                </Dialog>
 
-                    <TabsContent value="comments">
-                        <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-8 text-center">
-                            <MessageSquare className="w-12 h-12 text-slate-300 mx-auto mb-4" />
-                            <h3 className="text-lg font-medium text-slate-900 mb-2">No comments yet</h3>
-                            <p className="text-slate-500">Comments and feedback will appear here.</p>
-                        </div>
-                    </TabsContent>
-
-                    <TabsContent value="activity">
-                        <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-8 text-center">
-                            <Clock className="w-12 h-12 text-slate-300 mx-auto mb-4" />
-                            <h3 className="text-lg font-medium text-slate-900 mb-2">Activity Log</h3>
-                            <p className="text-slate-500">Task activity will be tracked here.</p>
-                        </div>
-                    </TabsContent>
-                </Tabs>
-            </div>
-
-            <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
-                <DialogContent className="max-w-2xl">
-                    <DialogHeader>
-                        <DialogTitle>Edit Task</DialogTitle>
-                        <DialogDescription>Update the task details below.</DialogDescription>
-                    </DialogHeader>
-                    <TaskForm
-                        task={task}
-                        clients={clients || []}
-                        projects={projects || []}
-                        employees={employees}
-                        onSubmit={handleEditSubmit}
-                        onCancel={() => setIsEditOpen(false)}
-                        isSubmitting={updateTask.isPending}
-                    />
-                </DialogContent>
-            </Dialog>
-
-            <AlertDialog open={isDeleteOpen} onOpenChange={setIsDeleteOpen}>
-                <AlertDialogContent>
-                    <AlertDialogHeader>
-                        <AlertDialogTitle>Delete Task</AlertDialogTitle>
-                        <AlertDialogDescription>
-                            Are you sure you want to delete <strong>{task.title}</strong>? This action cannot be undone.
-                        </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                        <AlertDialogCancel onClick={() => setIsDeleteOpen(false)}>Cancel</AlertDialogCancel>
-                        <AlertDialogAction
-                            className="bg-red-600 hover:bg-red-700"
-                            onClick={async () => {
-                                await deleteTask.mutateAsync(task.id)
-                                setIsDeleteOpen(false)
-                                navigate('/admin/tasks')
-                            }}
-                        >
-                            {deleteTask.isPending ? 'Deleting…' : 'Delete Task'}
-                        </AlertDialogAction>
-                    </AlertDialogFooter>
-                </AlertDialogContent>
-            </AlertDialog>
+                <AlertDialog open={isDeleteOpen} onOpenChange={setIsDeleteOpen}>
+                    <AlertDialogContent>
+                        <AlertDialogHeader>
+                            <AlertDialogTitle>Delete Task</AlertDialogTitle>
+                            <AlertDialogDescription>
+                                Are you sure you want to delete <strong>{task.title}</strong>? This action cannot be undone.
+                            </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                            <AlertDialogCancel onClick={() => setIsDeleteOpen(false)}>Cancel</AlertDialogCancel>
+                            <AlertDialogAction
+                                className="bg-red-600 hover:bg-red-700"
+                                onClick={async () => {
+                                    await deleteTask.mutateAsync(task.id)
+                                    setIsDeleteOpen(false)
+                                    navigate('/admin/tasks')
+                                }}
+                            >
+                                {deleteTask.isPending ? 'Deleting…' : 'Delete Task'}
+                            </AlertDialogAction>
+                        </AlertDialogFooter>
+                    </AlertDialogContent>
+                </AlertDialog>
             </div>
         </SidebarLayout>
     )

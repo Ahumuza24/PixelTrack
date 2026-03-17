@@ -65,6 +65,29 @@ export const TaskPriority = {
 export type TaskPriority = typeof TaskPriority[keyof typeof TaskPriority]
 
 /**
+ * Comment left on a task thread
+ */
+export interface TaskComment {
+    id: string
+    taskId: string
+    authorId: string | null
+    body: string
+    createdAt: string
+    updatedAt: string
+}
+
+export interface CreateTaskCommentInput {
+    taskId: string
+    authorId: string
+    body: string
+}
+
+export interface DeleteTaskCommentInput {
+    commentId: string
+    taskId: string
+}
+
+/**
  * Task entity representing a design project task
  */
 export interface Task {
