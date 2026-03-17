@@ -47,42 +47,12 @@ import { useClients } from '@/features/clients'
 import { useUsers } from '@/features/users'
 import { useProjects } from '@/features/projects/hooks/useProjects'
 import { useAuth } from '@/features/auth/useAuth'
-import type { TaskStatus, TaskPriority } from '@/types'
-import { TaskStatus as TaskStatusConst, TaskPriority as TaskPriorityConst, UserRole, getTaskProgress } from '@/types'
+import { UserRole, getTaskProgress } from '@/types'
 import { TaskFilesSection } from '@/features/tasks/components/TaskFilesSection'
 import { TaskCommentsSection } from '@/features/tasks/components/TaskCommentsSection'
 import { TaskForm } from '@/features/tasks/components/TaskForm'
 import type { TaskFormValues } from '@/features/tasks/schemas/taskSchema'
-
-const statusLabels: Record<TaskStatus, string> = {
-    [TaskStatusConst.NOT_STARTED]: 'Not Started',
-    [TaskStatusConst.IN_PROGRESS]: 'In Progress',
-    [TaskStatusConst.IN_REVIEW]: 'In Review',
-    [TaskStatusConst.COMPLETE]: 'Complete',
-    [TaskStatusConst.BLOCKED]: 'Blocked',
-}
-
-const statusColors: Record<TaskStatus, string> = {
-    [TaskStatusConst.NOT_STARTED]: 'bg-slate-100 text-slate-700',
-    [TaskStatusConst.IN_PROGRESS]: 'bg-blue-100 text-blue-700',
-    [TaskStatusConst.IN_REVIEW]: 'bg-yellow-100 text-yellow-700',
-    [TaskStatusConst.COMPLETE]: 'bg-green-100 text-green-700',
-    [TaskStatusConst.BLOCKED]: 'bg-red-100 text-red-700',
-}
-
-const priorityLabels: Record<TaskPriority, string> = {
-    [TaskPriorityConst.LOW]: 'Low',
-    [TaskPriorityConst.MEDIUM]: 'Medium',
-    [TaskPriorityConst.HIGH]: 'High',
-    [TaskPriorityConst.URGENT]: 'Urgent',
-}
-
-const priorityColors: Record<TaskPriority, string> = {
-    [TaskPriorityConst.LOW]: 'bg-slate-100 text-slate-700',
-    [TaskPriorityConst.MEDIUM]: 'bg-blue-100 text-blue-700',
-    [TaskPriorityConst.HIGH]: 'bg-orange-100 text-orange-700',
-    [TaskPriorityConst.URGENT]: 'bg-red-100 text-red-700',
-}
+import { TaskStatusBadge } from '@/components/status'
 
 export function TaskDetailPage() {
     const { taskId } = useParams<{ taskId: string }>()
@@ -227,7 +197,7 @@ export function TaskDetailPage() {
                             </div>
                             <p className="text-xs text-slate-500 mt-3 flex items-center gap-2">
                                 <span>Current status:</span>
-                                <Badge className={statusColors[task.status]}>{statusLabels[task.status]}</Badge>
+                                <TaskStatusBadge status={task.status} />
                             </p>
                         </div>
 
@@ -300,7 +270,7 @@ export function TaskDetailPage() {
                                         <div className="w-2 h-2 mt-2 rounded-full bg-amber-500" />
                                         <div>
                                             <p className="text-sm font-medium text-slate-900">Current status</p>
-                                            <p className="text-xs text-slate-500">{statusLabels[task.status]}</p>
+                                            <TaskStatusBadge status={task.status} className="mt-1" />
                                         </div>
                                     </div>
                                 </div>

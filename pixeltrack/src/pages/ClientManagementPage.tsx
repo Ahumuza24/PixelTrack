@@ -1,5 +1,6 @@
 import { useState } from 'react'
-import { Building2, Users } from 'lucide-react'
+import { useNavigate } from 'react-router-dom'
+import { Building2 } from 'lucide-react'
 import {
     Dialog,
     DialogContent,
@@ -17,10 +18,11 @@ import {
     AlertDialogHeader,
     AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
-import { Button } from '@/components/ui/button'
+
 import { ClientList, ClientForm, useClients, useCreateClient, useUpdateClient, useDeleteClient } from '@/features/clients'
 import type { Client } from '@/types'
 import type { ClientFormValues } from '@/features/clients/schemas/clientSchema'
+import { ROUTES } from '@/lib/constants'
 
 /**
  * ClientManagementPage - Admin page for managing client companies.
@@ -40,6 +42,7 @@ export function ClientManagementPage() {
     const createClient = useCreateClient()
     const updateClient = useUpdateClient()
     const deleteClient = useDeleteClient()
+    const navigate = useNavigate()
 
     const [isFormOpen, setIsFormOpen] = useState(false)
     const [editingClient, setEditingClient] = useState<Client | null>(null)
@@ -57,6 +60,10 @@ export function ClientManagementPage() {
 
     const handleDelete = (client: Client) => {
         setDeletingClient(client)
+    }
+
+    const handleView = (client: Client) => {
+        navigate(ROUTES.ADMIN_CLIENT_DETAIL.replace(':clientId', client.id))
     }
 
     const handleFormSubmit = async (data: ClientFormValues) => {
@@ -96,14 +103,7 @@ export function ClientManagementPage() {
                                 </p>
                             </div>
                         </div>
-                        <Button
-                            onClick={handleAdd}
-                            className="bg-cobalt hover:bg-cobalt-600"
-                            disabled={createClient.isPending}
-                        >
-                            <Users className="w-4 h-4 mr-2" />
-                            Add Client
-                        </Button>
+                        
                     </div>
                 </div>
             </div>
@@ -118,6 +118,7 @@ export function ClientManagementPage() {
                         onRetry={refetch}
                         onEdit={handleEdit}
                         onDelete={handleDelete}
+                        onView={handleView}
                         onAdd={handleAdd}
                     />
                 </div>

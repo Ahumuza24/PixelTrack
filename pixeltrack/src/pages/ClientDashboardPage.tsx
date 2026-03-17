@@ -4,26 +4,10 @@ import { useAuth } from '@/features/auth/useAuth'
 import { useTasksByClient } from '@/features/tasks/hooks/useTasks'
 import { useClients } from '@/features/clients'
 import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import type { TaskStatus } from '@/types'
 import { TaskStatus as TaskStatusConst } from '@/types'
+import { TaskStatusBadge } from '@/components/status'
 
-const statusLabels: Record<TaskStatus, string> = {
-    [TaskStatusConst.NOT_STARTED]: 'Not Started',
-    [TaskStatusConst.IN_PROGRESS]: 'In Progress',
-    [TaskStatusConst.IN_REVIEW]: 'In Review',
-    [TaskStatusConst.COMPLETE]: 'Complete',
-    [TaskStatusConst.BLOCKED]: 'Blocked',
-}
-
-const statusColors: Record<TaskStatus, string> = {
-    [TaskStatusConst.NOT_STARTED]: 'bg-slate-100 text-slate-700',
-    [TaskStatusConst.IN_PROGRESS]: 'bg-blue-100 text-blue-700',
-    [TaskStatusConst.IN_REVIEW]: 'bg-yellow-100 text-yellow-700',
-    [TaskStatusConst.COMPLETE]: 'bg-green-100 text-green-700',
-    [TaskStatusConst.BLOCKED]: 'bg-red-100 text-red-700',
-}
 
 /**
  * ClientDashboardPage - Dashboard for clients showing their company tasks
@@ -137,9 +121,7 @@ export function ClientDashboardPage() {
                                         <div className="flex-1 min-w-0">
                                             <div className="flex items-center gap-2 mb-1">
                                                 <h3 className="font-medium text-slate-900 truncate">{task.title}</h3>
-                                                <Badge className={statusColors[task.status]}>
-                                                    {statusLabels[task.status]}
-                                                </Badge>
+                                                <TaskStatusBadge status={task.status} />
                                             </div>
                                             <p className="text-sm text-slate-500 truncate">
                                                 Due {new Date(task.dueDate).toLocaleDateString()}

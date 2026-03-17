@@ -29,6 +29,8 @@ interface ClientListProps {
     onEdit: (client: Client) => void
     /** Called when user clicks delete action */
     onDelete: (client: Client) => void
+    /** Called when the row is clicked to view details */
+    onView: (client: Client) => void
     /** Called when user clicks add new client */
     onAdd: () => void
     /** Optional error state */
@@ -62,6 +64,7 @@ export function ClientList({
     isLoading = false,
     onEdit,
     onDelete,
+    onView,
     onAdd,
     error = null,
     onRetry,
@@ -221,7 +224,11 @@ export function ClientList({
                             </TableRow>
                         ) : (
                             filteredClients.map((client) => (
-                                <TableRow key={client.id} className="group">
+                                <TableRow
+                                    key={client.id}
+                                    className="group cursor-pointer"
+                                    onClick={() => onView(client)}
+                                >
                                     <TableCell>
                                         {client.logoUrl ? (
                                             <img
@@ -264,7 +271,10 @@ export function ClientList({
                                     </TableCell>
                                     <TableCell>
                                         <DropdownMenu>
-                                            <DropdownMenuTrigger asChild>
+                                            <DropdownMenuTrigger
+                                                asChild
+                                                onClick={(event) => event.stopPropagation()}
+                                            >
                                                 <Button
                                                     variant="ghost"
                                                     size="sm"
@@ -274,11 +284,19 @@ export function ClientList({
                                                 </Button>
                                             </DropdownMenuTrigger>
                                             <DropdownMenuContent align="end">
-                                                <DropdownMenuItem onClick={() => onEdit(client)}>
+                                                <DropdownMenuItem
+                                                    onClick={(event) => {
+                                                        event.stopPropagation()
+                                                        onEdit(client)
+                                                    }}
+                                                >
                                                     Edit
                                                 </DropdownMenuItem>
                                                 <DropdownMenuItem
-                                                    onClick={() => onDelete(client)}
+                                                    onClick={(event) => {
+                                                        event.stopPropagation()
+                                                        onDelete(client)
+                                                    }}
                                                     className="text-red-600 focus:text-red-600"
                                                 >
                                                     Delete

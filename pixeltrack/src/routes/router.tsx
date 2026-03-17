@@ -5,6 +5,7 @@ import { SidebarLayout } from '@/components/layout/SidebarLayout'
 import { LoginPage } from '@/pages/LoginPage'
 import { AdminDashboardPage } from '@/pages/AdminDashboardPage'
 import { ClientManagementPage } from '@/pages/ClientManagementPage'
+import { ClientDetailPage } from '@/pages/ClientDetailPage'
 import { UserManagementPage } from '@/pages/UserManagementPage'
 import { ProjectManagementPage } from '@/pages/ProjectManagementPage'
 import { ProjectDetailPage } from '@/pages/ProjectDetailPage'
@@ -42,6 +43,7 @@ export const router = createBrowserRouter([
                         children: [
                             { path: ROUTES.ADMIN, element: <AdminDashboardPage /> },
                             { path: ROUTES.ADMIN_CLIENTS, element: <ClientManagementPage /> },
+                            { path: ROUTES.ADMIN_CLIENT_DETAIL, element: <ClientDetailPage /> },
                             { path: ROUTES.ADMIN_USERS, element: <UserManagementPage /> },
                             { path: ROUTES.ADMIN_PROJECTS, element: <ProjectManagementPage /> },
                             { path: ROUTES.ADMIN_PROJECT_DETAIL, element: <ProjectDetailPage /> },
