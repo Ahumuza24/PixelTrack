@@ -12,7 +12,10 @@ import { ProjectDetailPage } from '@/pages/ProjectDetailPage'
 import { TaskManagementPage } from '@/pages/TaskManagementPage'
 import { TaskDetailPage } from '@/pages/TaskDetailPage'
 import { EmployeeDashboardPage } from '@/pages/EmployeeDashboardPage'
+import { EmployeeAnalyticsPage } from '@/pages/EmployeeAnalyticsPage'
 import { ClientDashboardPage } from '@/pages/ClientDashboardPage'
+import { ClientReportsPage } from '@/pages/ClientReportsPage'
+import { ProjectAnalyticsPage } from '@/pages/ProjectAnalyticsPage'
 import { AnalyticsPage } from '@/pages/AnalyticsPage'
 import { NotFoundPage } from '@/pages/NotFoundPage'
 import { ROUTES } from '@/lib/constants'
@@ -50,6 +53,7 @@ export const router = createBrowserRouter([
                             { path: ROUTES.ADMIN_TASKS, element: <TaskManagementPage /> },
                             { path: ROUTES.ADMIN_REPORTS, element: <AdminDashboardPage /> },
                             { path: ROUTES.ANALYTICS, element: <AnalyticsPage /> },
+                            { path: ROUTES.PROJECT_ANALYTICS, element: <ProjectAnalyticsPage /> },
                         ],
                     },
                 ],
@@ -60,6 +64,7 @@ export const router = createBrowserRouter([
                 element: <RoleGuard allowedRoles={[UserRole.EMPLOYEE]} />,
                 children: [
                     { path: ROUTES.DASHBOARD, element: <EmployeeDashboardPage /> },
+                    { path: ROUTES.EMPLOYEE_ANALYTICS, element: <EmployeeAnalyticsPage /> },
                 ],
             },
 
@@ -68,6 +73,7 @@ export const router = createBrowserRouter([
                 element: <RoleGuard allowedRoles={[UserRole.CLIENT]} />,
                 children: [
                     { path: ROUTES.CLIENT, element: <ClientDashboardPage /> },
+                    { path: ROUTES.CLIENT_REPORTS, element: <ClientReportsPage /> },
                 ],
             },
 

@@ -7,6 +7,7 @@ import {
     FolderOpen,
     CheckSquare,
     BarChart3,
+    LineChart,
     FileText,
     Bell,
     Menu,
@@ -80,7 +81,37 @@ const navigation: NavItem[] = [
         label: 'Analytics',
         path: ROUTES.ANALYTICS,
         icon: BarChart3,
-        roles: [UserRole.ADMIN, UserRole.EMPLOYEE],
+        roles: [UserRole.ADMIN],
+    },
+    {
+        label: 'Project Analytics',
+        path: ROUTES.PROJECT_ANALYTICS,
+        icon: LineChart,
+        roles: [UserRole.ADMIN],
+    },
+    {
+        label: 'My Work',
+        path: ROUTES.DASHBOARD,
+        icon: CheckSquare,
+        roles: [UserRole.EMPLOYEE],
+    },
+    {
+        label: 'My Analytics',
+        path: ROUTES.EMPLOYEE_ANALYTICS,
+        icon: BarChart3,
+        roles: [UserRole.EMPLOYEE],
+    },
+    {
+        label: 'Client Home',
+        path: ROUTES.CLIENT,
+        icon: Building2,
+        roles: [UserRole.CLIENT],
+    },
+    {
+        label: 'Reports',
+        path: ROUTES.CLIENT_REPORTS,
+        icon: FileText,
+        roles: [UserRole.CLIENT],
     },
 ]
 
