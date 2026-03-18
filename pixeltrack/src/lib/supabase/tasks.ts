@@ -8,24 +8,36 @@ import { TaskStatus } from '@/types'
  * @returns The created Task with generated id and timestamps
  */
 export async function createTask(data: CreateTaskInput): Promise<Task> {
-    const { data: task, error } = await supabase
-        .from('tasks')
-        .insert({
-            title: data.title,
-            description: data.description,
-            status: data.status,
-            priority: data.priority,
-            due_date: data.dueDate,
-            client_id: data.clientId,
-            project_id: data.projectId,
-            assignees: data.assignees,
-            created_by: data.createdBy,
-        })
-        .select()
-        .single()
+    const { data: sessionData } = await supabase.auth.getSession()
+    const token = sessionData.session?.access_token
 
-    if (error) throw error
-    if (!task) throw new Error('Failed to create task')
+    if (!token) {
+        throw new Error('Not authenticated')
+    }
+
+    const functionUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/create-task`
+
+    const response = await fetch(functionUrl, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+            apikey: import.meta.env.VITE_SUPABASE_ANON_KEY,
+        },
+        body: JSON.stringify(data),
+    })
+
+    const result = await response.json().catch(() => ({}))
+
+    if (!response.ok) {
+        throw new Error(result.error || `Failed to create task: ${response.status}`)
+    }
+
+    const task = result.task
+
+    if (!task) {
+        throw new Error('Task creation response missing payload')
+    }
 
     return {
         id: task.id,

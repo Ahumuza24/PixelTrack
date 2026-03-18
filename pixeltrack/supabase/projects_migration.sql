@@ -9,13 +9,27 @@ create table if not exists public.projects (
     client_id uuid references public.clients(id) on delete cascade not null,
     title text not null,
     description text,
-    status text not null default 'active' check (status in ('active', 'completed', 'on_hold', 'cancelled')),
+    status text not null default 'not_started' check (
+        status in ('not_started', 'active', 'completed', 'on_hold', 'cancelled')
+    ),
     start_date timestamptz,
     due_date timestamptz,
     created_by uuid references public.profiles(id) on delete set null,
     created_at timestamptz default now(),
     updated_at timestamptz default now()
 );
+
+-- Ensure status column matches latest defaults/constraints even on existing tables
+alter table public.projects
+    alter column status set default 'not_started';
+
+alter table public.projects
+    drop constraint if exists projects_status_check;
+
+alter table public.projects
+    add constraint projects_status_check check (
+        status in ('not_started', 'active', 'completed', 'on_hold', 'cancelled')
+    );
 
 -- Add project_id to tasks table (nullable for standalone tasks)
 alter table public.tasks add column if not exists project_id uuid references public.projects(id) on delete set null;
@@ -31,6 +45,7 @@ create index if not exists idx_tasks_project_id on public.tasks(project_id);
 -- ============================================
 -- TRIGGERS
 -- ============================================
+DROP TRIGGER IF EXISTS update_projects_updated_at ON public.projects;
 CREATE TRIGGER update_projects_updated_at BEFORE UPDATE ON public.projects
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
@@ -41,6 +56,7 @@ CREATE TRIGGER update_projects_updated_at BEFORE UPDATE ON public.projects
 alter table public.projects enable row level security;
 
 -- Admins have full access
+DROP POLICY IF EXISTS "Admins have full access to projects" ON public.projects;
 CREATE POLICY "Admins have full access to projects" ON public.projects
     FOR ALL
     TO authenticated
@@ -52,6 +68,7 @@ CREATE POLICY "Admins have full access to projects" ON public.projects
     );
 
 -- Employees can read all projects
+DROP POLICY IF EXISTS "Employees can read all projects" ON public.projects;
 CREATE POLICY "Employees can read all projects" ON public.projects
     FOR SELECT
     TO authenticated
@@ -63,6 +80,7 @@ CREATE POLICY "Employees can read all projects" ON public.projects
     );
 
 -- Employees can create projects
+DROP POLICY IF EXISTS "Employees can create projects" ON public.projects;
 CREATE POLICY "Employees can create projects" ON public.projects
     FOR INSERT
     TO authenticated
@@ -74,6 +92,7 @@ CREATE POLICY "Employees can create projects" ON public.projects
     );
 
 -- Employees can update projects
+DROP POLICY IF EXISTS "Employees can update projects" ON public.projects;
 CREATE POLICY "Employees can update projects" ON public.projects
     FOR UPDATE
     TO authenticated
@@ -85,6 +104,7 @@ CREATE POLICY "Employees can update projects" ON public.projects
     );
 
 -- Client-role users can only see projects for their client
+DROP POLICY IF EXISTS "Clients can only see own projects" ON public.projects;
 CREATE POLICY "Clients can only see own projects" ON public.projects
     FOR SELECT
     TO authenticated

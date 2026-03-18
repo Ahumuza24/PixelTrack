@@ -42,6 +42,10 @@ export type AdminCheck =
   | { ok: true; user: User; supabase: SupabaseClient }
   | { ok: false; response: Response }
 
+export type AuthenticatedUserCheck =
+  | { ok: true; user: User; supabase: SupabaseClient }
+  | { ok: false; response: Response }
+
 export async function requireAdmin(req: Request): Promise<AdminCheck> {
   const authHeader = req.headers.get("Authorization")
 
@@ -68,6 +72,38 @@ export async function requireAdmin(req: Request): Promise<AdminCheck> {
 
   if (profile.role !== "admin") {
     return { ok: false, response: jsonResponse({ error: `Access denied. Role: ${profile.role}` }, { status: 403 }) }
+  }
+
+  return { ok: true, user: userData.user, supabase }
+}
+
+export async function fetchProfileDisplayName(admin: SupabaseClient, userId: string): Promise<string | null> {
+  const { data, error } = await admin
+    .from("profiles")
+    .select("display_name")
+    .eq("id", userId)
+    .maybeSingle()
+
+  if (error) {
+    console.error(`Failed to load profile ${userId}: ${error.message}`)
+    return null
+  }
+
+  return data?.display_name ?? null
+}
+
+export async function requireAuthenticatedUser(req: Request): Promise<AuthenticatedUserCheck> {
+  const authHeader = req.headers.get("Authorization")
+
+  if (!authHeader) {
+    return { ok: false, response: jsonResponse({ error: "Missing Authorization header" }, { status: 401 }) }
+  }
+
+  const supabase = createUserClient(authHeader)
+  const { data: userData, error: userError } = await supabase.auth.getUser()
+
+  if (userError || !userData?.user) {
+    return { ok: false, response: jsonResponse({ error: "Invalid JWT" }, { status: 401 }) }
   }
 
   return { ok: true, user: userData.user, supabase }

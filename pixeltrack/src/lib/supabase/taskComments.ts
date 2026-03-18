@@ -31,18 +31,37 @@ export async function listTaskComments(taskId: string): Promise<TaskComment[]> {
 }
 
 export async function createTaskComment(input: CreateTaskCommentInput): Promise<TaskComment> {
-    const { data, error } = await supabase
-        .from('comments')
-        .insert({
-            task_id: input.taskId,
-            author_id: input.authorId,
-            body: input.body,
-        })
-        .select('*')
-        .single()
+    const { data: sessionData } = await supabase.auth.getSession()
+    const token = sessionData.session?.access_token
 
-    if (error) throw error
-    return mapComment(data)
+    if (!token) {
+        throw new Error('Not authenticated')
+    }
+
+    const functionUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/create-task-comment`
+
+    const response = await fetch(functionUrl, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+            apikey: import.meta.env.VITE_SUPABASE_ANON_KEY,
+        },
+        body: JSON.stringify(input),
+    })
+
+    const result = await response.json().catch(() => ({}))
+
+    if (!response.ok) {
+        throw new Error(result.error || `Failed to create comment: ${response.status}`)
+    }
+
+    const comment = result.comment as TaskCommentRow | undefined
+    if (!comment) {
+        throw new Error('Comment creation response missing payload')
+    }
+
+    return mapComment(comment)
 }
 
 export async function deleteTaskComment(commentId: string): Promise<void> {

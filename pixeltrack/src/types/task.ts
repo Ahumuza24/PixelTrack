@@ -78,7 +78,6 @@ export interface TaskComment {
 
 export interface CreateTaskCommentInput {
     taskId: string
-    authorId: string
     body: string
 }
 

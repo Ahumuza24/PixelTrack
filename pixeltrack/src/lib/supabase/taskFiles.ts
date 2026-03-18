@@ -1,6 +1,17 @@
 import { supabase } from './config'
 import type { TaskFile } from '@/types'
 
+interface RegisterTaskFilePayload {
+    taskId: string
+    fileName: string
+    fileType: string
+    fileSize: number | null
+    fileUrl: string | null
+    isExternalLink: boolean
+    externalUrl: string | null
+    version?: number | null
+}
+
 const TASK_FILES_BUCKET = 'task-files'
 const ALLOWED_FILE_TYPES = new Set(['image/png', 'image/jpeg', 'image/svg+xml', 'application/pdf'])
 const MAX_FILE_SIZE_BYTES = 25 * 1024 * 1024 // 25 MB
@@ -70,21 +81,42 @@ function mapTaskFile(row: TaskFileRow): TaskFile {
     }
 }
 
-async function getNextVersion(taskId: string): Promise<number> {
-    const { data, error } = await supabase
-        .from('task_files')
-        .select('version')
-        .eq('task_id', taskId)
-        .order('version', { ascending: false })
-        .limit(1)
-        .maybeSingle()
-
-    if (error && error.code !== 'PGRST116') throw error
-    return (data?.version ?? 0) + 1
-}
-
 function isBinaryInput(input: UploadTaskFileInput): input is UploadBinaryFileInput {
     return 'file' in input
+}
+
+async function callRegisterTaskFile(payload: RegisterTaskFilePayload): Promise<TaskFileRow> {
+    const { data: sessionData } = await supabase.auth.getSession()
+    const token = sessionData.session?.access_token
+
+    if (!token) {
+        throw new Error('Not authenticated')
+    }
+
+    const functionUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/register-task-file`
+
+    const response = await fetch(functionUrl, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+            apikey: import.meta.env.VITE_SUPABASE_ANON_KEY,
+        },
+        body: JSON.stringify(payload),
+    })
+
+    const result = await response.json().catch(() => ({}))
+
+    if (!response.ok) {
+        throw new Error(result.error || `Failed to register file: ${response.status}`)
+    }
+
+    const taskFile = result.taskFile as TaskFileRow | undefined
+    if (!taskFile) {
+        throw new Error('Task file response missing payload')
+    }
+
+    return taskFile
 }
 
 /**
@@ -105,69 +137,62 @@ export async function listTaskFiles(taskId: string): Promise<TaskFile[]> {
  * Upload a binary asset or register an external link.
  */
 export async function uploadTaskFile(input: UploadTaskFileInput): Promise<TaskFile> {
-    const version = await getNextVersion(input.taskId)
-    const uploadedBy = 'uploadedBy' in input ? input.uploadedBy ?? null : null
-
     if (isBinaryInput(input)) {
-        const { file } = input
-
-        if (!ALLOWED_FILE_TYPES.has(file.type)) {
-            throw new Error('Unsupported file type. Allowed: PNG, JPG, SVG, PDF')
-        }
-
-        if (file.size > MAX_FILE_SIZE_BYTES) {
-            throw new Error('File exceeds 25MB limit')
-        }
-
-        const ext = getExtension(file.name) || '.bin'
-        const baseName = sanitizeFileName(file.name.replace(ext, '')) || `file-${version}`
-        const objectPath = `${input.taskId}/${version}-${baseName}-${generateId()}${ext}`
-
-        const { error: uploadError } = await supabase.storage
-            .from(TASK_FILES_BUCKET)
-            .upload(objectPath, file, {
-                contentType: file.type,
-                upsert: false,
-            })
-
-        if (uploadError) throw uploadError
-
-        const { data, error } = await supabase
-            .from('task_files')
-            .insert({
-                task_id: input.taskId,
-                uploaded_by: uploadedBy,
-                file_name: file.name,
-                file_url: objectPath,
-                file_type: file.type,
-                file_size: file.size,
-                version,
-                is_external_link: false,
-            })
-            .select('*')
-            .single()
-
-        if (error) throw error
-        return mapTaskFile(data)
+        return uploadBinaryTaskFile(input)
     }
 
-    const { data, error } = await supabase
-        .from('task_files')
-        .insert({
-            task_id: input.taskId,
-            uploaded_by: uploadedBy,
-            file_name: input.displayName,
-            file_type: 'external/link',
-            file_size: null,
-            version,
-            is_external_link: true,
-            external_url: input.externalUrl,
-        })
-        .select('*')
-        .single()
+    return uploadExternalTaskFile(input)
+}
 
-    if (error) throw error
-    return mapTaskFile(data)
+async function uploadBinaryTaskFile(input: UploadBinaryFileInput): Promise<TaskFile> {
+    const { file, taskId } = input
+
+    if (!ALLOWED_FILE_TYPES.has(file.type)) {
+        throw new Error('Unsupported file type. Allowed: PNG, JPG, SVG, PDF')
+    }
+
+    if (file.size > MAX_FILE_SIZE_BYTES) {
+        throw new Error('File exceeds 25MB limit')
+    }
+
+    const ext = getExtension(file.name) || '.bin'
+    const baseName = sanitizeFileName(file.name.replace(ext, '')) || `file-${Date.now()}`
+    const objectPath = `${taskId}/${baseName}-${generateId()}${ext}`
+
+    const { error: uploadError } = await supabase.storage
+        .from(TASK_FILES_BUCKET)
+        .upload(objectPath, file, {
+            contentType: file.type,
+            upsert: false,
+        })
+
+    if (uploadError) throw uploadError
+
+    const taskFile = await callRegisterTaskFile({
+        taskId,
+        fileName: file.name,
+        fileType: file.type,
+        fileSize: file.size,
+        fileUrl: objectPath,
+        isExternalLink: false,
+        externalUrl: null,
+    })
+
+    return mapTaskFile(taskFile)
+}
+
+async function uploadExternalTaskFile(input: UploadExternalFileInput): Promise<TaskFile> {
+    const taskFile = await callRegisterTaskFile({
+        taskId: input.taskId,
+        fileName: input.displayName,
+        fileType: 'external/link',
+        fileSize: null,
+        fileUrl: null,
+        isExternalLink: true,
+        externalUrl: input.externalUrl,
+    })
+
+    return mapTaskFile(taskFile)
 }
 
 /**

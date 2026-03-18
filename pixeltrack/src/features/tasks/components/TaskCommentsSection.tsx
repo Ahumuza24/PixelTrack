@@ -36,7 +36,6 @@ export function TaskCommentsSection({ taskId, users, currentUser }: TaskComments
 
         await createComment.mutateAsync({
             taskId,
-            authorId: currentUser.uid,
             body: body.trim(),
         })
         setBody('')

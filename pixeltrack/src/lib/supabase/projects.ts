@@ -13,7 +13,7 @@ export async function createProject(data: CreateProjectInput): Promise<Project> 
             client_id: data.clientId,
             title: data.title,
             description: data.description,
-            status: data.status ?? 'active',
+            status: data.status ?? 'not_started',
             start_date: data.startDate,
             due_date: data.dueDate,
         })
