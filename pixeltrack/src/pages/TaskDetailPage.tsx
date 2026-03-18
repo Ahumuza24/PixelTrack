@@ -73,12 +73,12 @@ export function TaskDetailPage() {
     if (isLoading) {
         return (
             <SidebarLayout>
-                <div className="min-h-screen bg-slate-50 p-8">
+                <div className="min-h-screen bg-background p-8">
                     <div className="max-w-4xl mx-auto">
-                        <div className="h-8 w-48 bg-slate-200 rounded animate-pulse mb-6" />
-                        <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-8">
-                            <div className="h-12 w-3/4 bg-slate-200 rounded animate-pulse mb-4" />
-                            <div className="h-32 bg-slate-100 rounded animate-pulse" />
+                        <div className="h-8 w-48 bg-muted rounded animate-pulse mb-6" />
+                        <div className="bg-card rounded-xl shadow-sm border border-border p-8">
+                            <div className="h-12 w-3/4 bg-muted rounded animate-pulse mb-4" />
+                            <div className="h-32 bg-muted rounded animate-pulse" />
                         </div>
                     </div>
                 </div>
@@ -90,11 +90,11 @@ export function TaskDetailPage() {
     if (!task) {
         return (
             <SidebarLayout>
-                <div className="min-h-screen bg-slate-50 p-8">
+                <div className="min-h-screen bg-background p-8">
                     <div className="max-w-4xl mx-auto text-center">
-                        <CheckSquare className="w-16 h-16 text-slate-300 mx-auto mb-4" />
-                        <h1 className="text-2xl font-bold text-slate-900 mb-2">Task Not Found</h1>
-                        <p className="text-slate-500 mb-4">The task you are looking for does not exist.</p>
+                        <CheckSquare className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
+                        <h1 className="text-2xl font-bold text-foreground mb-2">Task Not Found</h1>
+                        <p className="text-muted-foreground mb-4">The task you are looking for does not exist.</p>
                         <Button onClick={() => navigate(-1)}>
                             <ArrowLeft className="w-4 h-4 mr-2" />
                             Go Back
@@ -130,11 +130,11 @@ export function TaskDetailPage() {
 
     return (
         <SidebarLayout>
-            <div className="min-h-screen bg-gradient-to-b from-[#f4f7fb] via-white to-white">
-                <div className="bg-white/80 border-b border-slate-200 backdrop-blur">
+            <div className="min-h-screen bg-gradient-to-b from-background via-background/95 to-background">
+                <div className="bg-card/80 border-b border-border backdrop-blur">
                     <div className="max-w-5xl mx-auto px-4 sm:px-6 py-4 flex items-center justify-between">
                         <div>
-                            <p className="text-sm font-semibold text-slate-500 uppercase tracking-widest">Task Detail</p>
+                            <p className="text-sm font-semibold text-muted-foreground uppercase tracking-widest">Task Detail</p>
                         </div>
                         {canEdit && (
                             <div className="flex gap-2">
@@ -160,54 +160,54 @@ export function TaskDetailPage() {
 
 
                     <div>
-                        <h1 className="text-3xl font-bold text-slate-900 tracking-tight">{task.title}</h1>
-                        <p className="text-base text-slate-600 mt-3 whitespace-pre-wrap">
+                        <h1 className="text-3xl font-bold text-foreground tracking-tight">{task.title}</h1>
+                        <p className="text-base text-muted-foreground mt-3 whitespace-pre-wrap">
                             {task.description || 'No description added yet.'}
                         </p>
                     </div>
                     <section className="grid gap-4 md:grid-cols-3">
-                        <div className="rounded-2xl border border-slate-100 bg-white p-5 shadow-sm">
+                        <div className="rounded-2xl border border-border bg-card p-5 shadow-sm">
                             <div className="flex items-center gap-3 mb-3">
-                                <Calendar className="w-5 h-5 text-cobalt" />
-                                <span className="text-sm font-semibold text-slate-500">Due Date</span>
+                                <Calendar className="w-5 h-5 text-primary" />
+                                <span className="text-sm font-semibold text-muted-foreground">Due Date</span>
                             </div>
-                            <p className="text-lg font-semibold text-slate-900">
+                            <p className="text-lg font-semibold text-foreground">
                                 {new Date(task.dueDate).toLocaleDateString(undefined, {
                                     weekday: 'long',
                                     month: 'long',
                                     day: 'numeric',
                                 })}
                             </p>
-                            <p className="text-xs text-slate-500 mt-2">Stay on track to avoid slipping deadlines.</p>
+                            <p className="text-xs text-muted-foreground mt-2">Stay on track to avoid slipping deadlines.</p>
                         </div>
 
-                        <div className="rounded-2xl border border-slate-100 bg-white p-5 shadow-sm">
+                        <div className="rounded-2xl border border-border bg-card p-5 shadow-sm">
                             <div className="flex items-center justify-between mb-3">
-                                <div className="flex items-center gap-2 text-sm text-slate-500">
+                                <div className="flex items-center gap-2 text-sm text-muted-foreground">
                                     <CheckSquare className="w-4 h-4" />
                                     Progress
                                 </div>
-                                <span className="text-sm font-semibold text-slate-900">{progressPercent}%</span>
+                                <span className="text-sm font-semibold text-foreground">{progressPercent}%</span>
                             </div>
-                            <div className="h-2 rounded-full bg-slate-100 overflow-hidden">
+                            <div className="h-2 rounded-full bg-muted overflow-hidden">
                                 <div
-                                    className="h-full bg-cobalt rounded-full transition-all"
+                                    className="h-full bg-primary rounded-full transition-all"
                                     style={{ width: `${progressPercent}%` }}
                                 />
                             </div>
-                            <p className="text-xs text-slate-500 mt-3 flex items-center gap-2">
+                            <p className="text-xs text-muted-foreground mt-3 flex items-center gap-2">
                                 <span>Current status:</span>
                                 <TaskStatusBadge status={task.status} />
                             </p>
                         </div>
 
-                        <div className="rounded-2xl border border-slate-100 bg-white p-5 shadow-sm">
+                        <div className="rounded-2xl border border-border bg-card p-5 shadow-sm">
                             <div className="flex items-center gap-3 mb-3">
-                                <Building2 className="w-5 h-5 text-cobalt" />
-                                <span className="text-sm font-semibold text-slate-500">Client</span>
+                                <Building2 className="w-5 h-5 text-primary" />
+                                <span className="text-sm font-semibold text-muted-foreground">Client</span>
                             </div>
-                            <p className="text-lg font-semibold text-slate-900">{client?.name || 'Unknown Client'}</p>
-                            <p className="text-xs text-slate-500 mt-2">
+                            <p className="text-lg font-semibold text-foreground">{client?.name || 'Unknown Client'}</p>
+                            <p className="text-xs text-muted-foreground mt-2">
                                 {project ? `Part of ${project.title}` : 'Standalone task'}
                             </p>
                         </div>
@@ -215,11 +215,11 @@ export function TaskDetailPage() {
 
                     <section className="grid gap-6 lg:grid-cols-[2fr_1fr]">
                         <div className="space-y-6">
-                            <div className="rounded-2xl border border-slate-100 bg-white p-6 shadow-sm">
+                            <div className="rounded-2xl border border-border bg-card p-6 shadow-sm">
                                 <div className="flex items-center justify-between mb-4">
                                     <div>
-                                        <h2 className="text-lg font-semibold text-slate-900">Design Files</h2>
-                                        <p className="text-sm text-slate-500">Uploads and external links shared with the client.</p>
+                                        <h2 className="text-lg font-semibold text-foreground">Design Files</h2>
+                                        <p className="text-sm text-muted-foreground">Uploads and external links shared with the client.</p>
                                     </div>
                                     <Badge variant="secondary">{taskFiles?.length ?? 0} files</Badge>
                                 </div>
@@ -239,20 +239,20 @@ export function TaskDetailPage() {
                                 currentUser={user}
                             />
 
-                            <div className="rounded-2xl border border-slate-100 bg-white p-6 shadow-sm">
+                            <div className="rounded-2xl border border-border bg-card p-6 shadow-sm">
                                 <div className="flex items-center gap-3 mb-4">
-                                    <Clock className="w-5 h-5 text-cobalt" />
+                                    <Clock className="w-5 h-5 text-primary" />
                                     <div>
-                                        <h3 className="text-lg font-semibold text-slate-900">Activity Highlights</h3>
-                                        <p className="text-sm text-slate-500">Automatic snapshots of key events.</p>
+                                        <h3 className="text-lg font-semibold text-foreground">Activity Highlights</h3>
+                                        <p className="text-sm text-muted-foreground">Automatic snapshots of key events.</p>
                                     </div>
                                 </div>
                                 <div className="space-y-4">
                                     <div className="flex items-start gap-3">
-                                        <div className="w-2 h-2 mt-2 rounded-full bg-cobalt" />
+                                        <div className="w-2 h-2 mt-2 rounded-full bg-primary" />
                                         <div>
-                                            <p className="text-sm font-medium text-slate-900">Task created</p>
-                                            <p className="text-xs text-slate-500">
+                                            <p className="text-sm font-medium text-foreground">Task created</p>
+                                            <p className="text-xs text-muted-foreground">
                                                 {new Date(task.createdAt).toLocaleString()}
                                             </p>
                                         </div>
@@ -260,8 +260,8 @@ export function TaskDetailPage() {
                                     <div className="flex items-start gap-3">
                                         <div className="w-2 h-2 mt-2 rounded-full bg-emerald-500" />
                                         <div>
-                                            <p className="text-sm font-medium text-slate-900">Last updated</p>
-                                            <p className="text-xs text-slate-500">
+                                            <p className="text-sm font-medium text-foreground">Last updated</p>
+                                            <p className="text-xs text-muted-foreground">
                                                 {new Date(task.updatedAt).toLocaleString()}
                                             </p>
                                         </div>
@@ -269,8 +269,9 @@ export function TaskDetailPage() {
                                     <div className="flex items-start gap-3">
                                         <div className="w-2 h-2 mt-2 rounded-full bg-amber-500" />
                                         <div>
-                                            <p className="text-sm font-medium text-slate-900">Current status</p>
-                                            <TaskStatusBadge status={task.status} className="mt-1" />
+                                            <p className="text-sm font-medium text-foreground">Current status</p>
+                                            <TaskStatusBadge status={task.status} className=
+"mt-1" />
                                         </div>
                                     </div>
                                 </div>
@@ -278,14 +279,12 @@ export function TaskDetailPage() {
                         </div>
 
                         <div className="space-y-6">
-
-
-                            <div className="rounded-2xl border border-slate-100 bg-white p-6 shadow-sm">
+                            <div className="rounded-2xl border border-border bg-card p-6 shadow-sm">
                                 <div className="flex items-center gap-3 mb-4">
-                                    <Users className="w-5 h-5 text-cobalt" />
+                                    <Users className="w-5 h-5 text-primary" />
                                     <div>
-                                        <h3 className="text-lg font-semibold text-slate-900">Team</h3>
-                                        <p className="text-sm text-slate-500">{assignees.length} assignee(s)</p>
+                                        <h3 className="text-lg font-semibold text-foreground">Team</h3>
+                                        <p className="text-sm text-muted-foreground">{assignees.length} assignee(s)</p>
                                     </div>
                                 </div>
                                 <div className="flex flex-wrap gap-2">
@@ -293,40 +292,40 @@ export function TaskDetailPage() {
                                         assignees.map((assignee) => (
                                             <div
                                                 key={assignee.uid}
-                                                className="flex items-center gap-2 rounded-full bg-slate-100 px-3 py-1"
+                                                className="flex items-center gap-2 rounded-full bg-muted px-3 py-1"
                                             >
-                                                <div className="w-7 h-7 rounded-full bg-cobalt text-white text-xs font-semibold flex items-center justify-center">
+                                                <div className="w-7 h-7 rounded-full bg-primary text-primary-foreground text-xs font-semibold flex items-center justify-center">
                                                     {assignee.displayName.charAt(0).toUpperCase()}
                                                 </div>
-                                                <span className="text-sm font-medium text-slate-800">
+                                                <span className="text-sm font-medium text-foreground">
                                                     {assignee.displayName}
                                                 </span>
                                             </div>
                                         ))
                                     ) : (
-                                        <p className="text-sm text-slate-500">No assignees yet.</p>
+                                        <p className="text-sm text-muted-foreground">No assignees yet.</p>
                                     )}
                                 </div>
                             </div>
 
-                            <div className="rounded-2xl border border-slate-100 bg-white p-6 shadow-sm">
+                            <div className="rounded-2xl border border-border bg-card p-6 shadow-sm">
                                 <div className="flex items-center gap-3 mb-4">
-                                    <Clock className="w-5 h-5 text-cobalt" />
+                                    <Clock className="w-5 h-5 text-primary" />
                                     <div>
-                                        <h3 className="text-lg font-semibold text-slate-900">Timeline</h3>
-                                        <p className="text-sm text-slate-500">Key timestamps</p>
+                                        <h3 className="text-lg font-semibold text-foreground">Timeline</h3>
+                                        <p className="text-sm text-muted-foreground">Key timestamps</p>
                                     </div>
                                 </div>
                                 <dl className="space-y-3 text-sm">
                                     <div className="flex items-center justify-between">
-                                        <dt className="text-slate-500">Created</dt>
-                                        <dd className="font-medium text-slate-900">
+                                        <dt className="text-muted-foreground">Created</dt>
+                                        <dd className="font-medium text-foreground">
                                             {new Date(task.createdAt).toLocaleDateString()}
                                         </dd>
                                     </div>
                                     <div className="flex items-center justify-between">
-                                        <dt className="text-slate-500">Last Updated</dt>
-                                        <dd className="font-medium text-slate-900">
+                                        <dt className="text-muted-foreground">Last Updated</dt>
+                                        <dd className="font-medium text-foreground">
                                             {new Date(task.updatedAt).toLocaleDateString()}
                                         </dd>
                                     </div>

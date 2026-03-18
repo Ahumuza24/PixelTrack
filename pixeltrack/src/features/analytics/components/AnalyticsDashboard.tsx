@@ -91,12 +91,12 @@ export function AnalyticsDashboard() {
     const canExport = Boolean(clientReport.data && !clientReport.isLoading)
 
     return (
-        <div className="flex-1 flex flex-col min-w-0 overflow-hidden bg-[#f5f7f8]">
-            <header className="border-b border-slate-200 bg-white/80 backdrop-blur px-6 py-4">
+        <div className="flex-1 flex flex-col min-w-0 overflow-hidden bg-background text-foreground">
+            <header className="border-b border-border bg-card/90 backdrop-blur px-6 py-4">
                 <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
                     <div>
-                        <p className="text-xs uppercase text-slate-500">Analytics</p>
-                        <h1 className="text-2xl font-bold text-slate-900">Performance &amp; Reporting</h1>
+                        <p className="text-xs uppercase text-muted-foreground">Analytics</p>
+                        <h1 className="text-2xl font-bold text-foreground">Performance &amp; Reporting</h1>
                     </div>
                     <div className="flex items-center gap-3 flex-wrap">
                         <Select value={datePreset} onValueChange={(value) => setDatePreset(value as AnalyticsDatePreset)}>
@@ -118,7 +118,7 @@ export function AnalyticsDashboard() {
                                     value={formatDateInputValue(customRange?.from)}
                                     onChange={(event) => handleCustomRangeChange('from', event.target.value)}
                                 />
-                                <span className="text-slate-400">—</span>
+                                <span className="text-muted-foreground">—</span>
                                 <Input
                                     type="date"
                                     value={formatDateInputValue(customRange?.to)}
@@ -134,8 +134,8 @@ export function AnalyticsDashboard() {
                 <section className="space-y-4">
                     <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
                         <div>
-                            <h2 className="text-lg font-semibold text-slate-900">Employee Analytics</h2>
-                            <p className="text-sm text-slate-500">Track workload, completion velocity, and collaboration.</p>
+                            <h2 className="text-lg font-semibold text-foreground">Employee Analytics</h2>
+                            <p className="text-sm text-muted-foreground">Track workload, completion velocity, and collaboration.</p>
                         </div>
                         <div className="flex flex-wrap gap-3 items-center">
                             <Select value={selectedEmployee ?? activeEmployeeId ?? undefined} onValueChange={setSelectedEmployee}>
@@ -190,7 +190,7 @@ export function AnalyticsDashboard() {
                             <CardContent className="p-4">
                                 <div className="flex items-center justify-between">
                                     <div>
-                                        <p className="text-xs uppercase text-slate-500">Assigned</p>
+                                        <p className="text-sm text-muted-foreground">Assigned</p>
                                         <p className="text-2xl font-semibold text-slate-900">
                                             {employeeData?.totals.assigned ?? 0}
                                         </p>
@@ -205,16 +205,16 @@ export function AnalyticsDashboard() {
                             <CardContent className="p-4">
                                 <div className="flex items-center justify-between">
                                     <div>
-                                        <p className="text-xs uppercase text-slate-500">Completed</p>
-                                        <p className="text-2xl font-semibold text-green-600">
+                                        <p className="text-sm text-muted-foreground">Completed</p>
+                                        <p className="text-2xl font-bold text-emerald-500">
                                             {employeeData?.totals.completed ?? 0}
                                         </p>
                                     </div>
-                                    <div className="h-10 w-10 rounded-lg bg-green-50 flex items-center justify-center">
-                                        <BarChart3 className="w-5 h-5 text-green-600" />
+                                    <div className="h-10 w-10 rounded-lg bg-emerald-500/10 flex items-center justify-center">
+                                        <BarChart3 className="w-5 h-5 text-emerald-500" />
                                     </div>
                                 </div>
-                                <p className="text-xs text-slate-500 mt-1">
+                                <p className="text-xs text-muted-foreground mt-1">
                                     {employeeData?.completedWithinRange ?? 0} within selected period
                                 </p>
                             </CardContent>
@@ -223,13 +223,13 @@ export function AnalyticsDashboard() {
                             <CardContent className="p-4">
                                 <div className="flex items-center justify-between">
                                     <div>
-                                        <p className="text-xs uppercase text-slate-500">Avg completion time</p>
-                                        <p className="text-2xl font-semibold text-slate-900">
+                                        <p className="text-sm text-muted-foreground">Avg completion time</p>
+                                        <p className="text-2xl font-semibold text-foreground">
                                             {employeeData?.averageCompletionTimeHours ?? 0}h
                                         </p>
                                     </div>
-                                    <div className="h-10 w-10 rounded-lg bg-blue-50 flex items-center justify-center">
-                                        <Clock className="w-5 h-5 text-blue-600" />
+                                    <div className="h-10 w-10 rounded-lg bg-accent/20 flex items-center justify-center">
+                                        <Clock className="w-5 h-5 text-accent-foreground" />
                                     </div>
                                 </div>
                             </CardContent>
@@ -238,16 +238,16 @@ export function AnalyticsDashboard() {
                             <CardContent className="p-4">
                                 <div className="flex items-center justify-between">
                                     <div>
-                                        <p className="text-xs uppercase text-slate-500">Collaboration</p>
-                                        <p className="text-2xl font-semibold text-slate-900">
+                                        <p className="text-xs uppercase text-muted-foreground">Collaboration</p>
+                                        <p className="text-2xl font-semibold text-foreground">
                                             {(employeeData?.filesUploaded ?? 0) + (employeeData?.commentsAuthored ?? 0)}
                                         </p>
                                     </div>
-                                    <div className="h-10 w-10 rounded-lg bg-amber-50 flex items-center justify-center">
-                                        <Layers className="w-5 h-5 text-amber-600" />
+                                    <div className="h-10 w-10 rounded-lg bg-amber-400/20 flex items-center justify-center">
+                                        <Layers className="w-5 h-5 text-amber-500" />
                                     </div>
                                 </div>
-                                <p className="text-xs text-slate-500 mt-1">
+                                <p className="text-xs text-muted-foreground mt-1">
                                     {employeeData?.filesUploaded ?? 0} files · {employeeData?.commentsAuthored ?? 0} comments
                                 </p>
                             </CardContent>
@@ -260,23 +260,23 @@ export function AnalyticsDashboard() {
                         </CardHeader>
                         <CardContent>
                             {employeeAnalytics.isLoading ? (
-                                <div className="h-32 flex items-center justify-center text-slate-400 text-sm">Loading...</div>
+                                <div className="h-32 flex items-center justify-center text-muted-foreground text-sm">Loading...</div>
                             ) : employeeData && employeeData.tasks.length > 0 ? (
                                 <div className="space-y-3">
                                     {employeeData.tasks.slice(0, 6).map(({ task, isOverdue }) => (
                                         <div key={task.id} className="flex items-center justify-between">
                                             <div>
-                                                <p className="text-sm font-medium text-slate-900">{task.title}</p>
-                                                <p className="text-xs text-slate-500">Due {new Date(task.dueDate).toLocaleDateString()}</p>
+                                                <p className="text-sm font-medium text-foreground">{task.title}</p>
+                                                <p className="text-xs text-muted-foreground">Due {new Date(task.dueDate).toLocaleDateString()}</p>
                                             </div>
-                                            <Badge variant={isOverdue ? 'destructive' as const : 'secondary'}>
+                                            <Badge variant={isOverdue ? 'destructive' : 'secondary'}>
                                                 {isOverdue ? 'Overdue' : task.status.replace('_', ' ')}
                                             </Badge>
                                         </div>
                                     ))}
                                 </div>
                             ) : (
-                                <p className="text-sm text-slate-500">No tasks within the selected filters.</p>
+                                <p className="text-sm text-muted-foreground">No tasks within the selected filters.</p>
                             )}
                         </CardContent>
                     </Card>
@@ -285,8 +285,8 @@ export function AnalyticsDashboard() {
                 <section className="space-y-4">
                     <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
                         <div>
-                            <h2 className="text-lg font-semibold text-slate-900">Project Analytics</h2>
-                            <p className="text-sm text-slate-500">Monitor task flow, progress, and workload per project.</p>
+                            <h2 className="text-lg font-semibold text-foreground">Project Analytics</h2>
+                            <p className="text-sm text-muted-foreground">Monitor task flow, progress, and workload per project.</p>
                         </div>
                         <Select value={selectedProject ?? undefined} onValueChange={setSelectedProject}>
                             <SelectTrigger className="w-[240px]">
@@ -305,26 +305,26 @@ export function AnalyticsDashboard() {
                     <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                         <Card>
                             <CardContent className="p-4">
-                                <p className="text-xs uppercase text-slate-500">Total tasks</p>
-                                <p className="text-2xl font-semibold text-slate-900">{projectData?.totals.tasks ?? 0}</p>
+                                <p className="text-xs uppercase text-muted-foreground">Total tasks</p>
+                                <p className="text-2xl font-semibold text-foreground">{projectData?.totals.tasks ?? 0}</p>
                             </CardContent>
                         </Card>
                         <Card>
                             <CardContent className="p-4">
-                                <p className="text-xs uppercase text-slate-500">Completed</p>
-                                <p className="text-2xl font-semibold text-green-600">{projectData?.totals.completed ?? 0}</p>
+                                <p className="text-xs uppercase text-muted-foreground">Completed</p>
+                                <p className="text-2xl font-semibold text-emerald-500">{projectData?.totals.completed ?? 0}</p>
                             </CardContent>
                         </Card>
                         <Card>
                             <CardContent className="p-4">
-                                <p className="text-xs uppercase text-slate-500">In progress</p>
-                                <p className="text-2xl font-semibold text-slate-900">{projectData?.totals.inProgress ?? 0}</p>
+                                <p className="text-xs uppercase text-muted-foreground">In progress</p>
+                                <p className="text-2xl font-semibold text-foreground">{projectData?.totals.inProgress ?? 0}</p>
                             </CardContent>
                         </Card>
                         <Card>
                             <CardContent className="p-4">
-                                <p className="text-xs uppercase text-slate-500">Revision count</p>
-                                <p className="text-2xl font-semibold text-slate-900">{projectData?.revisionCount ?? 0}</p>
+                                <p className="text-xs uppercase text-muted-foreground">Revision count</p>
+                                <p className="text-2xl font-semibold text-foreground">{projectData?.revisionCount ?? 0}</p>
                             </CardContent>
                         </Card>
                     </div>
@@ -339,25 +339,22 @@ export function AnalyticsDashboard() {
                             ) : projectData ? (
                                 <>
                                     <div>
-                                        <div className="flex justify-between text-xs font-semibold">
+                                        <div className="flex justify-between text-xs font-semibold text-muted-foreground">
                                             <span>Progress</span>
                                             <span>{projectData.progressPercent}%</span>
                                         </div>
-                                        <div className="h-2 rounded-full bg-slate-100 overflow-hidden mt-2">
-                                            <div
-                                                className="h-full bg-[#0048ad] rounded-full"
-                                                style={{ width: `${projectData.progressPercent}%` }}
-                                            />
+                                        <div className="h-2 rounded-full bg-muted overflow-hidden mt-2">
+                                            <div className="h-full bg-primary rounded-full" style={{ width: `${projectData.progressPercent}%` }} />
                                         </div>
                                     </div>
                                     <div>
-                                        <p className="text-xs uppercase text-slate-500 mb-2">Assignee load</p>
+                                        <p className="text-xs uppercase text-muted-foreground mb-2">Assignee load</p>
                                         <div className="space-y-2">
                                             {projectData.assigneeLoad.length === 0 && (
-                                                <p className="text-sm text-slate-500">No assignees captured.</p>
+                                                <p className="text-sm text-muted-foreground">No assignees captured.</p>
                                             )}
                                             {projectData.assigneeLoad.map((entry) => (
-                                                <div key={entry.assigneeId} className="flex items-center justify-between text-sm">
+                                                <div key={entry.assigneeId} className="flex items-center justify-between text-sm text-foreground">
                                                     <span>{entry.assigneeId}</span>
                                                     <span className="font-semibold">{entry.taskCount} tasks</span>
                                                 </div>
@@ -375,8 +372,8 @@ export function AnalyticsDashboard() {
                 <section className="space-y-4">
                     <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
                         <div>
-                            <h2 className="text-lg font-semibold text-slate-900">Client Reports</h2>
-                            <p className="text-sm text-slate-500">Transparent reporting for every engagement.</p>
+                            <h2 className="text-lg font-semibold text-foreground">Client Reports</h2>
+                            <p className="text-sm text-muted-foreground">Transparent reporting for every engagement.</p>
                         </div>
                         <Select value={selectedClient ?? activeClientId ?? undefined} onValueChange={setSelectedClient}>
                             <SelectTrigger className="w-[240px]">
@@ -398,24 +395,24 @@ export function AnalyticsDashboard() {
                         </CardHeader>
                         <CardContent className="grid grid-cols-2 md:grid-cols-5 gap-4">
                             <div>
-                                <p className="text-xs uppercase text-slate-500">Projects</p>
-                                <p className="text-2xl font-semibold text-slate-900">{clientData?.summary.projects ?? 0}</p>
+                                <p className="text-xs uppercase text-muted-foreground">Projects</p>
+                                <p className="text-2xl font-semibold text-foreground">{clientData?.summary.projects ?? 0}</p>
                             </div>
                             <div>
-                                <p className="text-xs uppercase text-slate-500">Tasks</p>
-                                <p className="text-2xl font-semibold text-slate-900">{clientData?.summary.tasks ?? 0}</p>
+                                <p className="text-xs uppercase text-muted-foreground">Tasks</p>
+                                <p className="text-2xl font-semibold text-foreground">{clientData?.summary.tasks ?? 0}</p>
                             </div>
                             <div>
-                                <p className="text-xs uppercase text-slate-500">Completed</p>
-                                <p className="text-2xl font-semibold text-green-600">{clientData?.summary.completed ?? 0}</p>
+                                <p className="text-xs uppercase text-muted-foreground">Completed</p>
+                                <p className="text-2xl font-semibold text-emerald-500">{clientData?.summary.completed ?? 0}</p>
                             </div>
                             <div>
-                                <p className="text-xs uppercase text-slate-500">In progress</p>
-                                <p className="text-2xl font-semibold text-slate-900">{clientData?.summary.inProgress ?? 0}</p>
+                                <p className="text-xs uppercase text-muted-foreground">In progress</p>
+                                <p className="text-2xl font-semibold text-foreground">{clientData?.summary.inProgress ?? 0}</p>
                             </div>
                             <div>
-                                <p className="text-xs uppercase text-slate-500">Overdue</p>
-                                <p className="text-2xl font-semibold text-red-600">{clientData?.summary.overdue ?? 0}</p>
+                                <p className="text-xs uppercase text-muted-foreground">Overdue</p>
+                                <p className="text-2xl font-semibold text-destructive">{clientData?.summary.overdue ?? 0}</p>
                             </div>
                         </CardContent>
                     </Card>
@@ -430,15 +427,15 @@ export function AnalyticsDashboard() {
                                     <div className="h-24 flex items-center justify-center text-slate-400 text-sm">Loading...</div>
                                 ) : clientData && clientData.projectBreakdown.length > 0 ? (
                                     clientData.projectBreakdown.map((project) => (
-                                        <div key={project.project.id} className="border rounded-lg p-4 border-slate-100">
+                                        <div key={project.project.id} className="border rounded-lg p-4 border-border">
                                             <div className="flex items-center justify-between mb-2">
                                                 <div>
-                                                    <p className="text-sm font-semibold text-slate-900">{project.project.title}</p>
-                                                    <p className="text-xs text-slate-500">Client: {clientData.client?.name}</p>
+                                                    <p className="text-sm font-semibold text-foreground">{project.project.title}</p>
+                                                    <p className="text-xs text-muted-foreground">Client: {clientData.client?.name}</p>
                                                 </div>
                                                 <Badge variant="secondary">{project.progressPercent}%</Badge>
                                             </div>
-                                            <div className="flex gap-4 text-xs text-slate-600">
+                                            <div className="flex gap-4 text-xs text-muted-foreground">
                                                 <span>Tasks {project.totals.tasks}</span>
                                                 <span>Done {project.totals.completed}</span>
                                                 <span>Overdue {project.totals.overdue}</span>
@@ -446,7 +443,7 @@ export function AnalyticsDashboard() {
                                         </div>
                                     ))
                                 ) : (
-                                    <p className="text-sm text-slate-500">No project data for this client.</p>
+                                    <p className="text-sm text-muted-foreground">No project data for this client.</p>
                                 )}
                             </CardContent>
                         </Card>
@@ -456,30 +453,30 @@ export function AnalyticsDashboard() {
                             </CardHeader>
                             <CardContent className="space-y-4">
                                 <div>
-                                    <p className="text-xs uppercase text-slate-500 mb-2">Latest deliverables</p>
+                                    <p className="text-xs uppercase text-muted-foreground mb-2">Latest deliverables</p>
                                     <div className="space-y-2">
                                         {clientDeliverables.slice(0, 3).map((deliverable) => (
-                                            <div key={deliverable.taskId} className="flex items-center justify-between text-sm">
+                                            <div key={deliverable.taskId} className="flex items-center justify-between text-sm text-foreground">
                                                 <span className="truncate pr-2">{deliverable.taskTitle}</span>
-                                                <span className="text-slate-500">v{deliverable.latestVersion}</span>
+                                                <span className="text-muted-foreground">v{deliverable.latestVersion}</span>
                                             </div>
                                         ))}
                                         {clientDeliverables.length === 0 && (
-                                            <p className="text-sm text-slate-500">No uploads yet.</p>
+                                            <p className="text-sm text-muted-foreground">No uploads yet.</p>
                                         )}
                                     </div>
                                 </div>
                                 <div>
-                                    <p className="text-xs uppercase text-slate-500 mb-2">Feedback threads</p>
+                                    <p className="text-xs uppercase text-muted-foreground mb-2">Feedback threads</p>
                                     <div className="space-y-2">
                                         {clientFeedback.slice(0, 3).map((feedback) => (
-                                            <div key={feedback.taskId} className="flex items-center justify-between text-sm">
+                                            <div key={feedback.taskId} className="flex items-center justify-between text-sm text-foreground">
                                                 <span className="truncate pr-2">{feedback.taskTitle}</span>
-                                                <span className="text-slate-500">{feedback.commentCount} comments</span>
+                                                <span className="text-muted-foreground">{feedback.commentCount} comments</span>
                                             </div>
                                         ))}
                                         {clientFeedback.length === 0 && (
-                                            <p className="text-sm text-slate-500">No feedback captured.</p>
+                                            <p className="text-sm text-muted-foreground">No feedback captured.</p>
                                         )}
                                     </div>
                                 </div>
@@ -491,8 +488,8 @@ export function AnalyticsDashboard() {
                 <section className="space-y-4">
                     <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
                         <div>
-                            <h2 className="text-lg font-semibold text-slate-900">Report Generator</h2>
-                            <p className="text-sm text-slate-500">Export branded reports for client stakeholders.</p>
+                            <h2 className="text-lg font-semibold text-foreground">Report Generator</h2>
+                            <p className="text-sm text-muted-foreground">Export branded reports for client stakeholders.</p>
                         </div>
                         <div className="flex gap-2 flex-wrap">
                             <Button onClick={() => clientData && exportClientReportToPdf(clientData)} disabled={!canExport} className="gap-2">
@@ -509,7 +506,7 @@ export function AnalyticsDashboard() {
                         </div>
                     </div>
                     {!canExport && (
-                        <p className="text-xs text-slate-500">Select a client to enable exports.</p>
+                        <p className="text-xs text-muted-foreground">Select a client to enable exports.</p>
                     )}
                 </section>
             </div>

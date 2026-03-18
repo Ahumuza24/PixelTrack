@@ -208,19 +208,19 @@ export function AdminDashboardPage() {
     const reviewTasksList = tasks?.filter((t) => t.status === TaskStatus.IN_REVIEW) || []
 
     const quickActions = [
-        { icon: Plus, label: 'New Project', href: '/admin/projects', color: 'bg-[#0048ad]' },
-        { icon: Plus, label: 'New Task', href: '/admin/tasks', color: 'bg-emerald-600' },
-        { icon: Building2, label: 'Add Client', href: '/admin/clients', color: 'bg-violet-600' },
-        { icon: Users, label: 'Add Team Member', href: '/admin/users', color: 'bg-orange-600' },
+        { icon: Plus, label: 'New Project', href: '/admin/projects', className: 'bg-primary text-primary-foreground hover:bg-primary/90' },
+        { icon: Plus, label: 'New Task', href: '/admin/tasks', className: 'bg-secondary text-secondary-foreground hover:bg-secondary/80' },
+        { icon: Building2, label: 'Add Client', href: '/admin/clients', className: 'bg-accent text-accent-foreground hover:bg-accent/90' },
+        { icon: Users, label: 'Add Team Member', href: '/admin/users', className: 'bg-destructive text-destructive-foreground hover:bg-destructive/90' },
     ]
 
     return (
-        <div className="flex-1 flex flex-col min-w-0 overflow-hidden bg-[#f5f7f8]">
+        <div className="flex-1 flex flex-col min-w-0 overflow-hidden bg-background text-foreground">
             {/* Header */}
-            <header className="h-16 border-b border-slate-200 bg-white/80 backdrop-blur-md px-6 flex items-center justify-between z-10">
+            <header className="h-16 border-b border-border bg-card/90 backdrop-blur-md px-6 flex items-center justify-between z-10">
                 <div className="flex items-center gap-4 flex-1 max-w-xl">
                     <div className="relative w-full">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4" />
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground w-4 h-4" />
                         <Input
                             placeholder="Search projects, tasks, or files..."
                             value={searchQuery}
@@ -229,28 +229,28 @@ export function AdminDashboardPage() {
                             onBlur={handleSearchBlur}
                             onKeyDown={handleSearchKeyDown}
                             autoComplete="off"
-                            className="w-full bg-slate-100 border-none pl-10 focus:ring-2 focus:ring-[#0048ad]/50"
+                            className="w-full bg-muted/60 border border-transparent pl-10 focus:ring-2 focus:ring-ring/60"
                         />
                         {showSearchDropdown && (
-                            <div className="absolute left-0 right-0 top-full mt-2 rounded-2xl border border-slate-200 bg-white shadow-xl z-50">
+                            <div className="absolute left-0 right-0 top-full mt-2 rounded-2xl border border-border bg-card shadow-xl z-50">
                                 <div className="max-h-96 overflow-y-auto">
                                     {!canTriggerSearch ? (
-                                        <p className="p-4 text-sm text-slate-500">
+                                        <p className="p-4 text-sm text-muted-foreground">
                                             Type at least {ADMIN_SEARCH_MIN_LENGTH} characters to search tasks, projects, clients, and files.
                                         </p>
                                     ) : searchLoading ? (
-                                        <div className="p-4 text-sm text-slate-500 flex items-center gap-2">
-                                            <Loader2 className="w-4 h-4 animate-spin text-[#0048ad]" />
+                                        <div className="p-4 text-sm text-muted-foreground flex items-center gap-2">
+                                            <Loader2 className="w-4 h-4 animate-spin text-primary" />
                                             Searching...
                                         </div>
                                     ) : searchError ? (
-                                        <p className="p-4 text-sm text-red-500">Unable to load search results. Please try again.</p>
+                                        <p className="p-4 text-sm text-destructive">Unable to load search results. Please try again.</p>
                                     ) : normalizedSearchResults.length === 0 ? (
-                                        <p className="p-4 text-sm text-slate-500">
-                                            No matches for <span className="font-semibold text-slate-900">“{trimmedSearch}”</span>
+                                        <p className="p-4 text-sm text-muted-foreground">
+                                            No matches for <span className="font-semibold text-foreground">“{trimmedSearch}”</span>
                                         </p>
                                     ) : (
-                                        <ul className="divide-y divide-slate-100" role="listbox" aria-label="Admin search results">
+                                        <ul className="divide-y divide-border/70" role="listbox" aria-label="Admin search results">
                                             {normalizedSearchResults.map((result) => {
                                                 const config = SEARCH_TYPE_CONFIG[result.type]
                                                 const Icon = config.icon
@@ -259,7 +259,7 @@ export function AdminDashboardPage() {
                                                     <li key={`${result.type}-${result.id}`}>
                                                         <button
                                                             type="button"
-                                                            className="flex w-full items-center gap-4 p-4 text-left hover:bg-slate-50 focus:bg-slate-50 focus:outline-none transition-colors"
+                                                            className="flex w-full items-center gap-4 p-4 text-left hover:bg-muted/40 focus:bg-muted/40 focus:outline-none transition-colors"
                                                             onMouseDown={(event) => event.preventDefault()}
                                                             onClick={() => handleResultNavigation(result)}
                                                             aria-label={`Open ${config.label} ${result.title}`}
@@ -269,20 +269,20 @@ export function AdminDashboardPage() {
                                                                 <Icon className="w-5 h-5" />
                                                             </div>
                                                             <div className="flex-1 min-w-0">
-                                                                <p className="text-sm font-semibold text-slate-900 truncate">{result.title}</p>
-                                                                <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-slate-500">
+                                                                <p className="text-sm font-semibold text-foreground truncate">{result.title}</p>
+                                                                <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
                                                                     {result.subtitle && <span className="truncate">{result.subtitle}</span>}
                                                                     {result.subtitle && result.metadata && <span>•</span>}
                                                                     {result.metadata && <span className="truncate">{result.metadata}</span>}
                                                                 </div>
                                                             </div>
-                                                            <div className="text-right text-[10px] uppercase font-bold tracking-wide text-slate-400">
+                                                            <div className="text-right text-[10px] uppercase font-bold tracking-wide text-muted-foreground">
                                                                 {config.label}
                                                                 {result.type === 'file' && (
-                                                                    <p className="text-[10px] font-normal normal-case text-slate-500">{result.isExternalLink ? 'External link' : 'Storage file'}</p>
+                                                                    <p className="text-[10px] font-normal normal-case text-muted-foreground">{result.isExternalLink ? 'External link' : 'Storage file'}</p>
                                                                 )}
                                                             </div>
-                                                            <ArrowRight className="w-4 h-4 text-slate-300" />
+                                                            <ArrowRight className="w-4 h-4 text-muted-foreground/70" />
                                                         </button>
                                                     </li>
                                                 )
@@ -295,7 +295,7 @@ export function AdminDashboardPage() {
                     </div>
                 </div>
                 <div className="flex items-center gap-3">
-                    <button className="h-9 w-9 flex items-center justify-center rounded-lg hover:bg-slate-100 text-slate-600 relative">
+                    <button className="h-9 w-9 flex items-center justify-center rounded-lg hover:bg-muted/60 text-muted-foreground relative">
                         <Bell className="w-5 h-5" />
                         {overdueTasks > 0 && (
                             <span className="absolute top-0 right-0 h-4 w-4 bg-red-500 rounded-full text-[10px] text-white flex items-center justify-center">
@@ -303,7 +303,7 @@ export function AdminDashboardPage() {
                             </span>
                         )}
                     </button>
-                    <Button className="bg-[#0048ad] text-white hover:bg-[#003d8f]" onClick={() => navigate('/admin/projects')}>
+                    <Button onClick={() => navigate('/admin/projects')}>
                         <Plus className="w-4 h-4 mr-2" />
                         New Project
                     </Button>
@@ -311,127 +311,135 @@ export function AdminDashboardPage() {
             </header>
 
             {/* Dashboard Content */}
-            <div className="flex-1 overflow-y-auto p-6 space-y-8">
-                    {/* Welcome Section */}
-                    <section>
-                        <h2 className="text-3xl font-black tracking-tight">Agency Dashboard</h2>
-                        <p className="text-slate-500 mt-1">
-                            Welcome back, {user?.displayName?.split(' ')[0] || 'Admin'}. Here's what's happening today.
-                        </p>
-                    </section>
-
-                    {/* Stats Cards */}
-                    <section className="grid grid-cols-2 lg:grid-cols-5 gap-4">
-                        <Card>
-                            <CardContent className="p-4">
-                                <div className="flex items-center justify-between">
-                                    <div>
-                                        <p className="text-sm text-slate-500">Projects</p>
-                                        <p className="text-2xl font-bold">{totalProjects}</p>
-                                    </div>
-                                    <div className="h-10 w-10 bg-indigo-100 rounded-lg flex items-center justify-center">
-                                        <FolderKanban className="w-5 h-5 text-indigo-600" />
-                                    </div>
-                                </div>
-                            </CardContent>
-                        </Card>
-                        <Card>
-                            <CardContent className="p-4">
-                                <div className="flex items-center justify-between">
-                                    <div>
-                                        <p className="text-sm text-slate-500">Total Tasks</p>
-                                        <p className="text-2xl font-bold">{totalTasks}</p>
-                                    </div>
-                                    <div className="h-10 w-10 bg-[#0048ad]/10 rounded-lg flex items-center justify-center">
-                                        <CheckSquare className="w-5 h-5 text-[#0048ad]" />
-                                    </div>
-                                </div>
-                            </CardContent>
-                        </Card>
-                        <Card>
-                            <CardContent className="p-4">
-                                <div className="flex items-center justify-between">
-                                    <div>
-                                        <p className="text-sm text-slate-500">In Progress</p>
-                                        <p className="text-2xl font-bold">{inProgressTasks}</p>
-                                    </div>
-                                    <div className="h-10 w-10 bg-blue-100 rounded-lg flex items-center justify-center">
-                                        <Loader2 className="w-5 h-5 text-blue-600" />
-                                    </div>
-                                </div>
-                            </CardContent>
-                        </Card>
-                        <Card>
-                            <CardContent className="p-4">
-                                <div className="flex items-center justify-between">
-                                    <div>
-                                        <p className="text-sm text-slate-500">Clients</p>
-                                        <p className="text-2xl font-bold">{totalClients}</p>
-                                    </div>
-                                    <div className="h-10 w-10 bg-emerald-100 rounded-lg flex items-center justify-center">
-                                        <Building2 className="w-5 h-5 text-emerald-600" />
-                                    </div>
-                                </div>
-                            </CardContent>
-                        </Card>
-                        <Card>
-                            <CardContent className="p-4">
-                                <div className="flex items-center justify-between">
-                                    <div>
-                                        <p className="text-sm text-slate-500">Team Members</p>
-                                        <p className="text-2xl font-bold">{totalEmployees}</p>
-                                    </div>
-                                    <div className="h-10 w-10 bg-violet-100 rounded-lg flex items-center justify-center">
-                                        <Users className="w-5 h-5 text-violet-600" />
-                                    </div>
-                                </div>
-                            </CardContent>
-                        </Card>
-                    </section>
-
-                    {/* Quick Actions */}
-                    <section>
-                        <h3 className="text-lg font-bold mb-4">Quick Actions</h3>
-                        <div className="flex flex-wrap gap-3">
-                            {quickActions.map((action) => (
-                                <Button
-                                    key={action.label}
-                                    onClick={() => navigate(action.href)}
-                                    className={`${action.color} text-white hover:opacity-90`}
-                                >
-                                    <action.icon className="w-4 h-4 mr-2" />
-                                    {action.label}
-                                </Button>
-                            ))}
-                        </div>
-                    </section>
-
-                    {/* Overdue Tasks Alert */}
-                    {overdueTasks > 0 && (
+            <div className="flex-1 overflow-y-auto p-6">
+                <div className="grid gap-8 lg:grid-cols-[2fr,1fr] xl:grid-cols-[5fr,2fr]">
+                    <div className="space-y-8">
+                        {/* Welcome Section */}
                         <section>
-                            <Card className="border-red-200 bg-red-50">
-                                <CardContent className="p-4 flex items-center gap-4">
-                                    <div className="h-10 w-10 bg-red-100 rounded-full flex items-center justify-center">
-                                        <AlertCircle className="w-5 h-5 text-red-600" />
+                            <h2 className="text-3xl font-black tracking-tight text-foreground">Agency Dashboard</h2>
+                            <p className="text-muted-foreground mt-1">
+                                Welcome back, {user?.displayName?.split(' ')[0] || 'Admin'}. Here's what's happening today.
+                            </p>
+                        </section>
+
+                        {/* Stats Cards */}
+                        <section className="grid grid-cols-2 lg:grid-cols-5 gap-4">
+                            <Card>
+                                <CardContent className="p-4">
+                                    <div className="flex items-center justify-between">
+                                        <div>
+                                            <p className="text-sm text-muted-foreground">Projects</p>
+                                            <p className="text-2xl font-bold text-foreground">{totalProjects}</p>
+                                        </div>
+                                        <div className="h-10 w-10 bg-primary/10 rounded-lg flex items-center justify-center">
+                                            <FolderKanban className="w-5 h-5 text-primary" />
+                                        </div>
                                     </div>
-                                    <div className="flex-1">
-                                        <p className="font-semibold text-red-900">{overdueTasks} Overdue Task{overdueTasks > 1 ? 's' : ''}</p>
-                                        <p className="text-sm text-red-700">Some tasks need immediate attention</p>
+                                </CardContent>
+                            </Card>
+                            <Card>
+                                <CardContent className="p-4">
+                                    <div className="flex items-center justify-between">
+                                        <div>
+                                            <p className="text-sm text-muted-foreground">Total Tasks</p>
+                                            <p className="text-2xl font-bold text-foreground">{totalTasks}</p>
+                                        </div>
+                                        <div className="h-10 w-10 bg-primary/10 rounded-lg flex items-center justify-center">
+                                            <CheckSquare className="w-5 h-5 text-primary" />
+                                        </div>
                                     </div>
-                                    <Button variant="outline" className="border-red-300 text-red-700 hover:bg-red-100" onClick={() => navigate('/admin/tasks')}>
-                                        View Tasks
-                                        <ArrowRight className="w-4 h-4 ml-2" />
-                                    </Button>
+                                </CardContent>
+                            </Card>
+                            <Card>
+                                <CardContent className="p-4">
+                                    <div className="flex items-center justify-between">
+                                        <div>
+                                            <p className="text-sm text-muted-foreground">In Progress</p>
+                                            <p className="text-2xl font-bold text-foreground">{inProgressTasks}</p>
+                                        </div>
+                                        <div className="h-10 w-10 bg-accent/20 rounded-lg flex items-center justify-center">
+                                            <Loader2 className="w-5 h-5 text-accent-foreground" />
+                                        </div>
+                                    </div>
+                                </CardContent>
+                            </Card>
+                            <Card>
+                                <CardContent className="p-4">
+                                    <div className="flex items-center justify-between">
+                                        <div>
+                                            <p className="text-sm text-muted-foreground">Clients</p>
+                                            <p className="text-2xl font-bold text-foreground">{totalClients}</p>
+                                        </div>
+                                        <div className="h-10 w-10 bg-secondary rounded-lg flex items-center justify-center">
+                                            <Building2 className="w-5 h-5 text-secondary-foreground" />
+                                        </div>
+                                    </div>
+                                </CardContent>
+                            </Card>
+                            <Card>
+                                <CardContent className="p-4">
+                                    <div className="flex items-center justify-between">
+                                        <div>
+                                            <p className="text-sm text-muted-foreground">Team Members</p>
+                                            <p className="text-2xl font-bold text-foreground">{totalEmployees}</p>
+                                        </div>
+                                        <div className="h-10 w-10 bg-accent/20 rounded-lg flex items-center justify-center">
+                                            <Users className="w-5 h-5 text-accent-foreground" />
+                                        </div>
+                                    </div>
                                 </CardContent>
                             </Card>
                         </section>
-                    )}
 
-                    {/* Active Projects */}
-                    <section>
+                        {/* Quick Actions */}
+                        <section>
+                            <h3 className="text-lg font-bold mb-4">Quick Actions</h3>
+                            <div className="flex flex-wrap gap-3">
+                                {quickActions.map((action) => (
+                                    <Button
+                                        key={action.label}
+                                        onClick={() => navigate(action.href)}
+                                        className={`${action.className} border border-transparent shadow-sm`}
+                                    >
+                                        <action.icon className="w-4 h-4 mr-2" />
+                                        {action.label}
+                                    </Button>
+                                ))}
+                            </div>
+                        </section>
+
+                        {/* Overdue Tasks Alert */}
+                        {overdueTasks > 0 && (
+                            <section>
+                                <Card className="border-destructive/30 bg-destructive/10">
+                                    <CardContent className="p-4 flex items-center gap-4">
+                                        <div className="h-10 w-10 bg-destructive/20 rounded-full flex items-center justify-center text-destructive">
+                                            <AlertCircle className="w-5 h-5" />
+                                        </div>
+                                        <div className="flex-1">
+                                            <p className="font-semibold text-destructive">
+                                                {overdueTasks} Overdue Task{overdueTasks > 1 ? 's' : ''}
+                                            </p>
+                                            <p className="text-sm text-destructive-foreground/80">Some tasks need immediate attention</p>
+                                        </div>
+                                        <Button
+                                            variant="outline"
+                                            className="border-destructive/40 text-destructive hover:bg-destructive/10"
+                                            onClick={() => navigate('/admin/tasks')}
+                                        >
+                                            View Tasks
+                                            <ArrowRight className="w-4 h-4 ml-2" />
+                                        </Button>
+                                    </CardContent>
+                                </Card>
+                            </section>
+                        )}
+
+                        {/* Active Projects */}
+                        <section>
                         <div className="flex items-center justify-between mb-4">
-                            <h3 className="text-xl font-bold">Active Projects</h3>
-                            <button onClick={() => navigate('/admin/projects')} className="text-[#0048ad] text-sm font-semibold hover:underline">
+                            <h3 className="text-xl font-bold text-foreground">Active Projects</h3>
+                            <button onClick={() => navigate('/admin/projects')} className="text-primary text-sm font-semibold hover:underline">
                                 View all
                             </button>
                         </div>
@@ -439,7 +447,7 @@ export function AdminDashboardPage() {
                         {projectsLoading ? (
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                                 {[1, 2, 3].map((i) => (
-                                    <div key={i} className="h-48 bg-white rounded-xl animate-pulse" />
+                                    <div key={i} className="h-48 bg-card border border-border rounded-xl animate-pulse" />
                                 ))}
                             </div>
                         ) : activeProjects.length > 0 ? (
@@ -447,40 +455,40 @@ export function AdminDashboardPage() {
                                 {activeProjects.map((project) => {
                                     const progress = project.progress
                                     const statusConfig: Record<string, { label: string; bg: string; color: string; dot: string }> = {
-                                        not_started: { label: 'Not Started', bg: 'bg-slate-100', color: 'text-slate-700', dot: 'bg-slate-500' },
-                                        active: { label: 'Active', bg: 'bg-blue-100', color: 'text-blue-700', dot: 'bg-blue-500' },
-                                        on_hold: { label: 'On Hold', bg: 'bg-yellow-100', color: 'text-yellow-700', dot: 'bg-yellow-500' },
-                                        completed: { label: 'Completed', bg: 'bg-green-100', color: 'text-green-700', dot: 'bg-green-500' },
-                                        cancelled: { label: 'Cancelled', bg: 'bg-red-100', color: 'text-red-700', dot: 'bg-red-500' },
+                                        not_started: { label: 'Not Started', bg: 'bg-muted', color: 'text-muted-foreground', dot: 'bg-muted-foreground/70' },
+                                        active: { label: 'Active', bg: 'bg-primary/10', color: 'text-primary', dot: 'bg-primary' },
+                                        on_hold: { label: 'On Hold', bg: 'bg-amber-100 text-amber-700', color: 'text-amber-700', dot: 'bg-amber-500' },
+                                        completed: { label: 'Completed', bg: 'bg-emerald-100 text-emerald-700', color: 'text-emerald-700', dot: 'bg-emerald-500' },
+                                        cancelled: { label: 'Cancelled', bg: 'bg-destructive/10 text-destructive', color: 'text-destructive', dot: 'bg-destructive' },
                                     }
                                     const config = statusConfig[project.status] || statusConfig.not_started
 
                                     return (
                                         <div
                                             key={project.id}
-                                            className="bg-white p-5 rounded-xl border border-slate-200 hover:border-[#0048ad]/50 transition-all cursor-pointer group"
+                                            className="bg-card p-5 rounded-xl border border-border hover:border-primary/50 transition-all cursor-pointer group shadow-sm"
                                             onClick={() => navigate(`/admin/projects/${project.id}`)}
                                         >
                                             <div className="flex justify-between items-start mb-4">
-                                                <div className="h-12 w-12 rounded-lg bg-[#0048ad]/10 flex items-center justify-center text-[#0048ad]">
+                                                <div className="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center text-primary">
                                                     <FolderKanban className="w-6 h-6" />
                                                 </div>
-                                                <Badge className={`${config.bg} ${config.color}`}>
+                                                <Badge className={`text-xs font-semibold ${config.bg} ${config.color}`}>
                                                     <span className={`h-1.5 w-1.5 rounded-full ${config.dot} mr-1`} />
                                                     {config.label}
                                                 </Badge>
                                             </div>
-                                            <h4 className="font-bold text-lg mb-1 group-hover:text-[#0048ad] transition-colors">{project.title}</h4>
-                                            <p className="text-sm text-slate-500 mb-6">
+                                            <h4 className="font-bold text-lg mb-1 group-hover:text-primary transition-colors">{project.title}</h4>
+                                            <p className="text-sm text-muted-foreground mb-6">
                                                 Client: {project.clientName || 'Unknown'}
                                             </p>
                                             <div className="space-y-2">
                                                 <div className="flex justify-between text-xs font-medium">
-                                                    <span>{project.completedTasks}/{project.totalTasks} tasks</span>
-                                                    <span>{progress}%</span>
+                                                    <span className="text-muted-foreground">{project.completedTasks}/{project.totalTasks} tasks</span>
+                                                    <span className="text-foreground">{progress}%</span>
                                                 </div>
-                                                <div className="w-full h-2 bg-slate-100 rounded-full overflow-hidden">
-                                                    <div className="h-full bg-[#0048ad] rounded-full" style={{ width: `${progress}%` }} />
+                                                <div className="w-full h-2 bg-muted rounded-full overflow-hidden">
+                                                    <div className="h-full bg-primary rounded-full" style={{ width: `${progress}%` }} />
                                                 </div>
                                             </div>
                                         </div>
@@ -488,11 +496,11 @@ export function AdminDashboardPage() {
                                 })}
                             </div>
                         ) : (
-                            <Card className="bg-white">
+                            <Card className="bg-card">
                                 <CardContent className="p-8 text-center">
-                                    <FolderKanban className="w-12 h-12 text-slate-300 mx-auto mb-4" />
-                                    <h3 className="text-lg font-medium text-slate-900 mb-2">No active projects</h3>
-                                    <p className="text-slate-500 mb-4">Create your first project to get started</p>
+                                    <FolderKanban className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+                                    <h3 className="text-lg font-medium text-foreground mb-2">No active projects</h3>
+                                    <p className="text-muted-foreground mb-4">Create your first project to get started</p>
                                     <Button onClick={() => navigate('/admin/projects')}>
                                         <Plus className="w-4 h-4 mr-2" />
                                         Create Project
@@ -502,144 +510,152 @@ export function AdminDashboardPage() {
                         )}
                     </section>
 
-                    {/* Task Overview & Activity */}
-                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                         {/* Task Overview */}
-                        <div className="lg:col-span-2 space-y-6">
-                            <h3 className="text-xl font-bold">Task Overview</h3>
+                        <div className="space-y-6">
+                            <h3 className="text-xl font-bold text-foreground">Task Overview</h3>
                             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                                 {/* To Do Column */}
-                                <div className="bg-slate-100 p-4 rounded-xl">
+                                <div className="bg-muted/60 p-4 rounded-xl border border-border/60">
                                     <div className="flex items-center gap-2 mb-3">
-                                        <List className="w-5 h-5 text-slate-400" />
-                                        <span className="text-sm font-bold uppercase tracking-wider text-slate-500">To Do</span>
+                                        <List className="w-5 h-5 text-muted-foreground" />
+                                        <span className="text-sm font-bold uppercase tracking-wider text-muted-foreground">To Do</span>
                                         <Badge variant="secondary" className="ml-auto">{todoTasks.length}</Badge>
                                     </div>
                                     <div className="space-y-3">
                                         {todoTasks.slice(0, 3).map((task) => (
                                             <div
                                                 key={task.id}
-                                                className="bg-white p-3 rounded-lg shadow-sm border border-slate-100 cursor-pointer hover:shadow-md transition-shadow"
+                                                className="bg-card p-3 rounded-lg shadow-sm border border-border cursor-pointer hover:border-primary/40 transition-colors"
                                                 onClick={() => navigate(`/tasks/${task.id}`)}
                                             >
-                                                <p className="text-sm font-medium truncate">{task.title}</p>
-                                                <p className="text-xs text-slate-400 mt-1">
+                                                <p className="text-sm font-medium truncate text-foreground">{task.title}</p>
+                                                <p className="text-xs text-muted-foreground mt-1">
                                                     Due {new Date(task.dueDate).toLocaleDateString()}
                                                 </p>
                                             </div>
                                         ))}
-                                        {todoTasks.length === 0 && <p className="text-sm text-slate-400 italic">No tasks</p>}
+                                        {todoTasks.length === 0 && <p className="text-sm text-muted-foreground italic">No tasks</p>}
                                     </div>
                                 </div>
 
                                 {/* In Progress Column */}
-                                <div className="bg-slate-100 p-4 rounded-xl">
+                                <div className="bg-muted/60 p-4 rounded-xl border border-border/60">
                                     <div className="flex items-center gap-2 mb-3">
-                                        <Loader2 className="w-5 h-5 text-[#0048ad]" />
-                                        <span className="text-sm font-bold uppercase tracking-wider text-slate-500">In Progress</span>
+                                        <Loader2 className="w-5 h-5 text-primary" />
+                                        <span className="text-sm font-bold uppercase tracking-wider text-muted-foreground">In Progress</span>
                                         <Badge variant="secondary" className="ml-auto">{inProgressTasksList.length}</Badge>
                                     </div>
                                     <div className="space-y-3">
                                         {inProgressTasksList.slice(0, 3).map((task) => (
                                             <div
                                                 key={task.id}
-                                                className="bg-white p-3 rounded-lg shadow-sm border-l-4 border-l-[#0048ad] cursor-pointer hover:shadow-md transition-shadow"
+                                                className="bg-card p-3 rounded-lg shadow-sm border-l-4 border-l-primary cursor-pointer hover:border-primary/60 transition-colors"
                                                 onClick={() => navigate(`/tasks/${task.id}`)}
                                             >
-                                                <p className="text-sm font-medium truncate">{task.title}</p>
+                                                <p className="text-sm font-medium truncate text-foreground">{task.title}</p>
                                                 <div className="flex items-center gap-2 mt-2">
-                                                    <div className="h-5 w-5 rounded-full bg-[#0048ad]/20 flex items-center justify-center text-[10px] text-[#0048ad] font-medium">
+                                                    <div className="h-5 w-5 rounded-full bg-primary/20 flex items-center justify-center text-[10px] text-primary font-medium">
                                                         {task.assignees?.[0]?.charAt(0) || 'A'}
                                                     </div>
-                                                    <span className="text-xs text-slate-400 italic">In progress</span>
+                                                    <span className="text-xs text-muted-foreground italic">In progress</span>
                                                 </div>
                                             </div>
                                         ))}
-                                        {inProgressTasksList.length === 0 && <p className="text-sm text-slate-400 italic">No tasks</p>}
+                                        {inProgressTasksList.length === 0 && <p className="text-sm text-muted-foreground italic">No tasks</p>}
                                     </div>
                                 </div>
 
                                 {/* Review Column */}
-                                <div className="bg-slate-100 p-4 rounded-xl">
+                                <div className="bg-muted/60 p-4 rounded-xl border border-border/60">
                                     <div className="flex items-center gap-2 mb-3">
-                                        <Eye className="w-5 h-5 text-indigo-500" />
-                                        <span className="text-sm font-bold uppercase tracking-wider text-slate-500">Review</span>
+                                        <Eye className="w-5 h-5 text-primary" />
+                                        <span className="text-sm font-bold uppercase tracking-wider text-muted-foreground">Review</span>
                                         <Badge variant="secondary" className="ml-auto">{reviewTasksList.length}</Badge>
                                     </div>
                                     <div className="space-y-3">
                                         {reviewTasksList.slice(0, 3).map((task) => (
                                             <div
                                                 key={task.id}
-                                                className="bg-white p-3 rounded-lg shadow-sm border border-slate-100 cursor-pointer hover:shadow-md transition-shadow"
+                                                className="bg-card p-3 rounded-lg shadow-sm border border-border cursor-pointer hover:border-primary/40 transition-colors"
                                                 onClick={() => navigate(`/tasks/${task.id}`)}
                                             >
-                                                <p className="text-sm font-medium truncate">{task.title}</p>
-                                                <p className="text-xs text-indigo-500 mt-1 font-bold">Needs Approval</p>
+                                                <p className="text-sm font-medium truncate text-foreground">{task.title}</p>
+                                                <p className="text-xs text-primary mt-1 font-bold">Needs Approval</p>
                                             </div>
                                         ))}
-                                        {reviewTasksList.length === 0 && <p className="text-sm text-slate-400 italic">No tasks</p>}
+                                        {reviewTasksList.length === 0 && <p className="text-sm text-muted-foreground italic">No tasks</p>}
                                     </div>
                                 </div>
                             </div>
                         </div>
 
-                        {/* Recent Activity */}
+                    </div>
+
+                    {/* Right Rail */}
+                    <aside className="space-y-6">
+                        <div className="rounded-2xl border border-border bg-card p-4 shadow-sm">
+                            <h3 className="text-base font-semibold text-foreground mb-3">Team Pulse</h3>
+                            <p className="text-sm text-muted-foreground">
+                                Stay on top of feedback, file uploads, and status updates without leaving the dashboard.
+                            </p>
+                        </div>
+
                         <div className="space-y-6">
-                            <h3 className="text-xl font-bold">Recent Activity</h3>
-                            <Card className="border border-slate-200 overflow-hidden">
+                            <h3 className="text-xl font-bold text-foreground">Recent Activity</h3>
+                            <Card className="border border-border overflow-hidden bg-card">
                                 <CardContent className="p-5 space-y-6">
                                     {activityLoading ? (
                                         <div className="space-y-4">
                                             {[0, 1, 2].map((index) => (
-                                                <div key={index} className={`flex gap-4 ${index > 0 ? 'border-t border-slate-100 pt-6' : ''}`}>
+                                                <div key={index} className={`flex gap-4 ${index > 0 ? 'border-t border-border/60 pt-6' : ''}`}>
                                                     <div className="flex-shrink-0">
-                                                        <div className="h-10 w-10 rounded-full bg-slate-100 animate-pulse" />
+                                                        <div className="h-10 w-10 rounded-full bg-muted animate-pulse" />
                                                     </div>
                                                     <div className="flex-1 space-y-2">
-                                                        <div className="h-4 w-1/3 bg-slate-100 rounded animate-pulse" />
-                                                        <div className="h-3 w-2/3 bg-slate-100 rounded animate-pulse" />
+                                                        <div className="h-4 w-1/3 bg-muted rounded animate-pulse" />
+                                                        <div className="h-3 w-2/3 bg-muted rounded animate-pulse" />
                                                     </div>
                                                 </div>
                                             ))}
                                         </div>
                                     ) : activityError ? (
-                                        <p className="text-sm text-red-500">Unable to load activity. Please refresh.</p>
+                                        <p className="text-sm text-destructive">Unable to load activity. Please refresh.</p>
                                     ) : activityItems.length === 0 ? (
-                                        <p className="text-sm text-slate-500">No recent activity yet. Updates from comments, files, and task changes will appear here.</p>
+                                        <p className="text-sm text-muted-foreground">No recent activity yet. Updates from comments, files, and task changes will appear here.</p>
                                     ) : (
                                         activityItems.map((activity, index) => {
                                             const ActivityIcon = activity.icon
                                             return (
-                                                <div key={activity.id} className={`flex gap-4 ${index > 0 ? 'border-t border-slate-100 pt-6' : ''}`}>
+                                                <div key={activity.id} className={`flex gap-4 ${index > 0 ? 'border-t border-border/60 pt-6' : ''}`}>
                                                     <div className="flex-shrink-0">
                                                         <div className={`h-10 w-10 rounded-full flex items-center justify-center ${activity.backgroundClass} ${activity.accentClass}`}>
                                                             <ActivityIcon className="w-5 h-5" />
                                                         </div>
                                                     </div>
                                                     <div className="flex-1 min-w-0">
-                                                        <p className="text-sm">
+                                                        <p className="text-sm text-foreground">
                                                             <span className="font-bold">{activity.actor}</span>{' '}
                                                             {activity.action}{' '}
-                                                            <span className="text-[#0048ad] font-medium">{activity.target}</span>
+                                                            <span className="text-primary font-medium">{activity.target}</span>
                                                         </p>
                                                         {activity.preview && (
-                                                            <p className="text-xs text-slate-500 mt-1 italic">{activity.preview}</p>
+                                                            <p className="text-xs text-muted-foreground mt-1 italic">{activity.preview}</p>
                                                         )}
-                                                        <p className="text-[10px] text-slate-400 mt-2">{activity.timestamp}</p>
+                                                        <p className="text-[10px] text-muted-foreground/70 mt-2">{activity.timestamp}</p>
                                                     </div>
                                                 </div>
                                             )
                                         })
                                     )}
                                 </CardContent>
-                                <button className="w-full py-3 text-sm font-semibold bg-slate-50 border-t border-slate-200 hover:bg-slate-100 transition-colors">
+                                <button className="w-full py-3 text-sm font-semibold bg-muted/40 border-t border-border hover:bg-muted/60 transition-colors">
                                     View All Activity
                                 </button>
                             </Card>
                         </div>
-                    </div>
+                    </aside>
                 </div>
             </div>
-     
+        </div>
     )
 }

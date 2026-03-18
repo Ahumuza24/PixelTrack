@@ -25,12 +25,12 @@ import type { TaskFormValues } from '@/features/tasks/schemas/taskSchema'
 import type { ProjectStatus } from '@/types'
 import { TaskStatus, UserRole } from '@/types'
 
-const statusConfig: Record<ProjectStatus, { label: string; bg: string; color: string }> = {
-    not_started: { label: 'Not Started', bg: 'bg-slate-100', color: 'text-slate-600' },
-    active: { label: 'Active', bg: 'bg-blue-100', color: 'text-blue-600' },
-    completed: { label: 'Completed', bg: 'bg-green-100', color: 'text-green-600' },
-    on_hold: { label: 'On Hold', bg: 'bg-yellow-100', color: 'text-yellow-600' },
-    cancelled: { label: 'Cancelled', bg: 'bg-red-100', color: 'text-red-600' },
+const statusConfig: Record<ProjectStatus, { label: string; bgClass: string; textClass: string }> = {
+    not_started: { label: 'Not Started', bgClass: 'bg-muted', textClass: 'text-muted-foreground' },
+    active: { label: 'Active', bgClass: 'bg-primary/10', textClass: 'text-primary' },
+    completed: { label: 'Completed', bgClass: 'bg-emerald-500/15', textClass: 'text-emerald-500' },
+    on_hold: { label: 'On Hold', bgClass: 'bg-amber-100', textClass: 'text-amber-700' },
+    cancelled: { label: 'Cancelled', bgClass: 'bg-destructive/15', textClass: 'text-destructive' },
 }
 
 export function ProjectDetailPage() {
@@ -126,18 +126,18 @@ export function ProjectDetailPage() {
 
     if (isLoading) {
         return (
-            <div className="flex items-center justify-center h-64">
-                <Loader2 className="w-8 h-8 animate-spin text-[#0048ad]" />
+            <div className="flex items-center justify-center h-64 bg-background">
+                <Loader2 className="w-8 h-8 animate-spin text-primary" />
             </div>
         )
     }
 
     if (!project) {
         return (
-            <div className="flex flex-col items-center justify-center h-64">
-                <AlertCircle className="w-12 h-12 text-red-500 mb-4" />
-                <h2 className="text-xl font-semibold text-slate-900">Project not found</h2>
-                <p className="text-slate-500 mt-2">The project you're looking for doesn't exist.</p>
+            <div className="flex flex-col items-center justify-center h-64 bg-background text-foreground">
+                <AlertCircle className="w-12 h-12 text-destructive mb-4" />
+                <h2 className="text-xl font-semibold">Project not found</h2>
+                <p className="text-muted-foreground mt-2">The project you're looking for doesn't exist.</p>
                 <Button onClick={() => navigate('/admin/projects')} className="mt-4">
                     <ArrowLeft className="w-4 h-4 mr-2" />
                     Back to Projects
@@ -149,19 +149,19 @@ export function ProjectDetailPage() {
     const status = statusConfig[project.status]
 
     return (
-        <div className="flex-1 flex flex-col min-w-0 overflow-hidden bg-[#f5f7f8]">
+        <div className="flex-1 flex flex-col min-w-0 overflow-hidden bg-background text-foreground">
             {/* Header */}
-            <header className="h-16 border-b border-slate-200 bg-white/80 backdrop-blur-md px-6 flex items-center justify-between z-10">
+            <header className="h-16 border-b border-border bg-card/90 backdrop-blur-md px-6 flex items-center justify-between z-10">
                 <div className="flex items-center gap-4">
                     <button
                         onClick={() => navigate('/admin/projects')}
-                        className="h-9 w-9 flex items-center justify-center rounded-lg hover:bg-slate-100"
+                        className="h-9 w-9 flex items-center justify-center rounded-lg hover:bg-muted/60"
                     >
-                        <ArrowLeft className="w-5 h-5 text-slate-600" />
+                        <ArrowLeft className="w-5 h-5 text-muted-foreground" />
                     </button>
                     <div>
-                        <h1 className="text-lg font-semibold text-slate-900">{project.title}</h1>
-                        <p className="text-sm text-slate-500">{getClientName(project.clientId)}</p>
+                        <h1 className="text-lg font-semibold text-foreground">{project.title}</h1>
+                        <p className="text-sm text-muted-foreground">{getClientName(project.clientId)}</p>
                     </div>
                 </div>
                 <div className="flex items-center gap-3">
@@ -182,30 +182,30 @@ export function ProjectDetailPage() {
                     {/* Main Content */}
                     <div className="lg:col-span-2 space-y-6">
                         {/* Project Info Card */}
-                        <Card>
+                        <Card className="bg-card border border-border">
                             <CardContent className="p-6">
                                 <div className="flex items-start justify-between mb-4">
                                     <div className="flex items-center gap-3">
-                                        <div className="h-12 w-12 bg-[#0048ad]/10 rounded-lg flex items-center justify-center">
-                                            <FolderKanban className="w-6 h-6 text-[#0048ad]" />
+                                        <div className="h-12 w-12 bg-primary/10 rounded-lg flex items-center justify-center">
+                                            <FolderKanban className="w-6 h-6 text-primary" />
                                         </div>
                                         <div>
-                                            <h2 className="text-xl font-semibold text-slate-900">{project.title}</h2>
-                                            <Badge className={`mt-1 ${status.bg} ${status.color}`}>
+                                            <h2 className="text-xl font-semibold text-foreground">{project.title}</h2>
+                                            <Badge className={`mt-1 ${status.bgClass} ${status.textClass}`}>
                                                 {status.label}
                                             </Badge>
                                         </div>
                                     </div>
                                 </div>
 
-                                <p className="text-slate-600 mb-4">{project.description || 'No description provided.'}</p>
+                                <p className="text-muted-foreground mb-4">{project.description || 'No description provided.'}</p>
 
                                 <div className="grid grid-cols-2 gap-4">
-                                    <div className="flex items-center gap-2 text-sm text-slate-600">
+                                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
                                         <Calendar className="w-4 h-4" />
                                         <span>Start: {formatDate(project.startDate)}</span>
                                     </div>
-                                    <div className="flex items-center gap-2 text-sm text-slate-600">
+                                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
                                         <Calendar className="w-4 h-4" />
                                         <span>End: {formatDate(project.dueDate)}</span>
                                     </div>
@@ -214,42 +214,42 @@ export function ProjectDetailPage() {
                         </Card>
 
                         {/* Progress Card */}
-                        <Card>
+                        <Card className="bg-card border border-border">
                             <CardContent className="p-6">
-                                <h3 className="font-semibold text-slate-900 mb-4">Project Progress</h3>
+                                <h3 className="font-semibold text-foreground mb-4">Project Progress</h3>
                                 <div className="flex items-center gap-4 mb-4">
                                     <div className="flex-1">
                                         <Progress value={projectProgress} className="h-3" />
                                     </div>
-                                    <span className="text-lg font-semibold text-slate-900">{projectProgress}%</span>
+                                    <span className="text-lg font-semibold text-foreground">{projectProgress}%</span>
                                 </div>
 
                                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                                    <div className="p-3 bg-slate-50 rounded-lg text-center">
-                                        <p className="text-2xl font-bold text-slate-900">{taskStats.total}</p>
-                                        <p className="text-xs text-slate-500">Total Tasks</p>
+                                    <div className="p-3 bg-muted/60 rounded-lg text-center">
+                                        <p className="text-2xl font-bold text-foreground">{taskStats.total}</p>
+                                        <p className="text-xs text-muted-foreground">Total Tasks</p>
                                     </div>
-                                    <div className="p-3 bg-green-50 rounded-lg text-center">
+                                    <div className="p-3 bg-emerald-500/10 rounded-lg text-center">
                                         <p className="text-2xl font-bold text-green-600">{taskStats.completed}</p>
-                                        <p className="text-xs text-slate-500">Completed</p>
+                                        <p className="text-xs text-muted-foreground">Completed</p>
                                     </div>
-                                    <div className="p-3 bg-blue-50 rounded-lg text-center">
-                                        <p className="text-2xl font-bold text-blue-600">{taskStats.inProgress}</p>
-                                        <p className="text-xs text-slate-500">In Progress</p>
+                                    <div className="p-3 bg-primary/10 rounded-lg text-center">
+                                        <p className="text-2xl font-bold text-primary">{taskStats.inProgress}</p>
+                                        <p className="text-xs text-muted-foreground">In Progress</p>
                                     </div>
-                                    <div className="p-3 bg-red-50 rounded-lg text-center">
-                                        <p className="text-2xl font-bold text-red-600">{taskStats.blocked}</p>
-                                        <p className="text-xs text-slate-500">Blocked</p>
+                                    <div className="p-3 bg-destructive/15 rounded-lg text-center">
+                                        <p className="text-2xl font-bold text-destructive">{taskStats.blocked}</p>
+                                        <p className="text-xs text-muted-foreground">Blocked</p>
                                     </div>
                                 </div>
                             </CardContent>
                         </Card>
 
                         {/* Tasks List */}
-                        <Card>
+                        <Card className="bg-card border border-border">
                             <CardContent className="p-6">
                                 <div className="flex items-center justify-between mb-4">
-                                    <h3 className="font-semibold text-slate-900">Tasks</h3>
+                                    <h3 className="font-semibold text-foreground">Tasks</h3>
                                     <Button onClick={() => setIsTaskFormOpen(true)} size="sm">
                                         <Plus className="w-4 h-4 mr-2" />
                                         Add Task
@@ -257,8 +257,8 @@ export function ProjectDetailPage() {
                                 </div>
 
                                 {projectTasks.length === 0 ? (
-                                    <div className="text-center py-8 text-slate-500">
-                                        <CheckSquare className="w-12 h-12 mx-auto mb-4 text-slate-300" />
+                                    <div className="text-center py-8 text-muted-foreground">
+                                        <CheckSquare className="w-12 h-12 mx-auto mb-4 text-muted-foreground/60" />
                                         <p>No tasks yet. Add your first task to this project!</p>
                                     </div>
                                 ) : (
@@ -266,7 +266,7 @@ export function ProjectDetailPage() {
                                         {projectTasks.map((task) => (
                                             <div
                                                 key={task.id}
-                                                className="flex items-center justify-between p-3 bg-slate-50 rounded-lg hover:bg-slate-100 cursor-pointer"
+                                                className="flex items-center justify-between p-3 bg-muted/50 rounded-lg hover:bg-muted cursor-pointer"
                                                 onClick={() => navigate(`/tasks/${task.id}`)}
                                             >
                                                 <div className="flex items-center gap-3">
@@ -277,16 +277,16 @@ export function ProjectDetailPage() {
                                                         'bg-slate-400'
                                                     }`} />
                                                     <div>
-                                                        <p className="font-medium text-sm text-slate-900">{task.title}</p>
-                                                        <p className="text-xs text-slate-500">
+                                                        <p className="font-medium text-sm text-foreground">{task.title}</p>
+                                                        <p className="text-xs text-muted-foreground">
                                                             Due: {new Date(task.dueDate).toLocaleDateString()}
                                                         </p>
                                                     </div>
                                                 </div>
                                                 <Badge variant="outline" className={
-                                                    task.priority === 'urgent' ? 'border-red-200 text-red-700' :
-                                                    task.priority === 'high' ? 'border-orange-200 text-orange-700' :
-                                                    'border-slate-200 text-slate-600'
+                                                    task.priority === 'urgent' ? 'border-destructive/60 text-destructive' :
+                                                    task.priority === 'high' ? 'border-orange-300 text-orange-600' :
+                                                    'border-border text-muted-foreground'
                                                 }>
                                                     {task.priority}
                                                 </Badge>
@@ -301,9 +301,9 @@ export function ProjectDetailPage() {
                     {/* Sidebar */}
                     <div className="space-y-6">
                         {/* Client Info */}
-                        <Card>
+                        <Card className="bg-card border border-border">
                             <CardContent className="p-6">
-                                <h3 className="font-semibold text-slate-900 mb-4">Client</h3>
+                                <h3 className="font-semibold text-foreground mb-4">Client</h3>
                                 <div className="flex items-center gap-3">
                                     <div className="h-10 w-10 bg-slate-100 rounded-full flex items-center justify-center">
                                         <Users className="w-5 h-5 text-slate-600" />

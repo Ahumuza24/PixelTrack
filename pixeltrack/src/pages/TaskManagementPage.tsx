@@ -35,19 +35,19 @@ import { TaskStatus, TaskPriority, UserRole, getTaskProgress } from '@/types'
 type FilterTab = 'all' | 'my-tasks' | 'due-soon' | 'high-priority'
 type ViewMode = 'list' | 'kanban'
 
-const statusConfig: Record<TaskStatus, { label: string; bg: string; color: string; icon: typeof Clock }> = {
-    [TaskStatus.NOT_STARTED]: { label: 'To Do', bg: 'bg-slate-100', color: 'text-slate-600', icon: Clock },
-    [TaskStatus.IN_PROGRESS]: { label: 'In Progress', bg: 'bg-blue-100', color: 'text-blue-600', icon: Clock },
-    [TaskStatus.IN_REVIEW]: { label: 'Review', bg: 'bg-indigo-100', color: 'text-indigo-600', icon: Eye },
-    [TaskStatus.COMPLETE]: { label: 'Complete', bg: 'bg-green-100', color: 'text-green-600', icon: CheckCircle },
-    [TaskStatus.BLOCKED]: { label: 'Blocked', bg: 'bg-red-100', color: 'text-red-600', icon: AlertCircle },
+const statusConfig: Record<TaskStatus, { label: string; bgClass: string; textClass: string; icon: typeof Clock }> = {
+    [TaskStatus.NOT_STARTED]: { label: 'To Do', bgClass: 'bg-muted/70', textClass: 'text-muted-foreground', icon: Clock },
+    [TaskStatus.IN_PROGRESS]: { label: 'In Progress', bgClass: 'bg-primary/10', textClass: 'text-primary', icon: Clock },
+    [TaskStatus.IN_REVIEW]: { label: 'Review', bgClass: 'bg-accent/20', textClass: 'text-accent-foreground', icon: Eye },
+    [TaskStatus.COMPLETE]: { label: 'Complete', bgClass: 'bg-emerald-500/15', textClass: 'text-emerald-500', icon: CheckCircle },
+    [TaskStatus.BLOCKED]: { label: 'Blocked', bgClass: 'bg-destructive/15', textClass: 'text-destructive', icon: AlertCircle },
 }
 
-const priorityConfig: Record<TaskPriority, { label: string; color: string; icon: typeof Flag }> = {
-    [TaskPriority.LOW]: { label: 'Low', color: 'text-slate-500', icon: Flag },
-    [TaskPriority.MEDIUM]: { label: 'Medium', color: 'text-blue-500', icon: Flag },
-    [TaskPriority.HIGH]: { label: 'High', color: 'text-orange-500', icon: Flag },
-    [TaskPriority.URGENT]: { label: 'Urgent', color: 'text-red-500', icon: Flag },
+const priorityConfig: Record<TaskPriority, { label: string; colorClass: string; icon: typeof Flag }> = {
+    [TaskPriority.LOW]: { label: 'Low', colorClass: 'text-muted-foreground', icon: Flag },
+    [TaskPriority.MEDIUM]: { label: 'Medium', colorClass: 'text-blue-500', icon: Flag },
+    [TaskPriority.HIGH]: { label: 'High', colorClass: 'text-orange-500', icon: Flag },
+    [TaskPriority.URGENT]: { label: 'Urgent', colorClass: 'text-destructive', icon: Flag },
 }
 
 export function TaskManagementPage() {
@@ -179,22 +179,22 @@ export function TaskManagementPage() {
     }
 
     return (
-        <div className="flex-1 flex flex-col min-w-0 overflow-hidden bg-[#f5f7f8]">
+        <div className="flex-1 flex flex-col min-w-0 overflow-hidden bg-background text-foreground">
             {/* Header */}
-            <header className="h-16 border-b border-slate-200 bg-white/80 backdrop-blur-md px-6 flex items-center justify-between z-10">
+            <header className="h-16 border-b border-border bg-card/90 backdrop-blur px-6 flex items-center justify-between z-10">
                 <div className="flex items-center gap-4 flex-1 max-w-xl">
                     <div className="relative w-full">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4" />
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground w-4 h-4" />
                         <Input
                             placeholder="Search tasks..."
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
-                            className="w-full bg-slate-100 border-none pl-10 focus:ring-2 focus:ring-[#0048ad]/50"
+                            className="w-full bg-muted/60 border border-transparent pl-10 focus:ring-2 focus:ring-ring/60"
                         />
                     </div>
                 </div>
                 <div className="flex items-center gap-3">
-                    <button className="h-9 w-9 flex items-center justify-center rounded-lg hover:bg-slate-100 text-slate-600 relative">
+                    <button className="h-9 w-9 flex items-center justify-center rounded-lg hover:bg-muted/70 text-muted-foreground relative">
                         <Bell className="w-5 h-5" />
                         {getOverdueCount() > 0 && (
                             <span className="absolute top-0 right-0 h-4 w-4 bg-red-500 rounded-full text-[10px] text-white flex items-center justify-center">
@@ -202,7 +202,7 @@ export function TaskManagementPage() {
                             </span>
                         )}
                     </button>
-                    <Button className="bg-[#0048ad] text-white hover:bg-[#003d8f]" onClick={handleAdd}>
+                    <Button onClick={handleAdd}>
                         <Plus className="w-4 h-4 mr-2" />
                         New Task
                     </Button>
@@ -217,10 +217,12 @@ export function TaskManagementPage() {
                         <CardContent className="p-4">
                             <div className="flex items-center justify-between">
                                 <div>
-                                    <p className="text-sm text-slate-500">Total Tasks</p>
-                                    <p className="text-2xl font-bold">{tasks?.length || 0}</p>
+                                    <p className="text-sm text-muted-foreground">Total Tasks</p>
+                                    <p className="text-2xl font-bold text-foreground">{tasks?.length || 0}</p>
                                 </div>
-                                <CheckSquare className="w-8 h-8 text-[#0048ad]" />
+                                <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center">
+                                    <CheckSquare className="w-5 h-5 text-primary" />
+                                </div>
                             </div>
                         </CardContent>
                     </Card>
@@ -228,10 +230,12 @@ export function TaskManagementPage() {
                         <CardContent className="p-4">
                             <div className="flex items-center justify-between">
                                 <div>
-                                    <p className="text-sm text-slate-500">Completed</p>
-                                    <p className="text-2xl font-bold">{tasks?.filter((t) => t.status === TaskStatus.COMPLETE).length || 0}</p>
+                                    <p className="text-sm text-muted-foreground">Completed</p>
+                                    <p className="text-2xl font-bold text-emerald-500">{tasks?.filter((t) => t.status === TaskStatus.COMPLETE).length || 0}</p>
                                 </div>
-                                <CheckCircle className="w-8 h-8 text-green-500" />
+                                <div className="h-10 w-10 rounded-lg bg-emerald-500/15 flex items-center justify-center">
+                                    <CheckCircle className="w-5 h-5 text-emerald-500" />
+                                </div>
                             </div>
                         </CardContent>
                     </Card>
@@ -239,10 +243,12 @@ export function TaskManagementPage() {
                         <CardContent className="p-4">
                             <div className="flex items-center justify-between">
                                 <div>
-                                    <p className="text-sm text-slate-500">In Progress</p>
-                                    <p className="text-2xl font-bold">{tasks?.filter((t) => t.status === TaskStatus.IN_PROGRESS).length || 0}</p>
+                                    <p className="text-sm text-muted-foreground">In Progress</p>
+                                    <p className="text-2xl font-bold text-foreground">{tasks?.filter((t) => t.status === TaskStatus.IN_PROGRESS).length || 0}</p>
                                 </div>
-                                <Clock className="w-8 h-8 text-blue-500" />
+                                <div className="h-10 w-10 rounded-lg bg-accent/20 flex items-center justify-center">
+                                    <Clock className="w-5 h-5 text-accent-foreground" />
+                                </div>
                             </div>
                         </CardContent>
                     </Card>
@@ -250,10 +256,12 @@ export function TaskManagementPage() {
                         <CardContent className="p-4">
                             <div className="flex items-center justify-between">
                                 <div>
-                                    <p className="text-sm text-slate-500">Overdue</p>
-                                    <p className="text-2xl font-bold">{getOverdueCount()}</p>
+                                    <p className="text-sm text-muted-foreground">Overdue</p>
+                                    <p className="text-2xl font-bold text-destructive">{getOverdueCount()}</p>
                                 </div>
-                                <AlertCircle className="w-8 h-8 text-red-500" />
+                                <div className="h-10 w-10 rounded-lg bg-destructive/15 flex items-center justify-center">
+                                    <AlertCircle className="w-5 h-5 text-destructive" />
+                                </div>
                             </div>
                         </CardContent>
                     </Card>
@@ -268,8 +276,8 @@ export function TaskManagementPage() {
                                 onClick={() => { setActiveTab(tab); setCurrentPage(1) }}
                                 className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
                                     activeTab === tab
-                                        ? 'bg-[#0048ad] text-white'
-                                        : 'bg-white text-slate-600 hover:bg-slate-100'
+                                        ? 'bg-primary text-primary-foreground shadow'
+                                        : 'bg-card text-muted-foreground hover:bg-muted/60'
                                 }`}
                             >
                                 {tab === 'all' ? 'All Tasks' : tab === 'my-tasks' ? 'My Tasks' : tab === 'due-soon' ? 'Due Soon' : 'High Priority'}
@@ -280,7 +288,7 @@ export function TaskManagementPage() {
                         <button
                             onClick={() => setViewMode('list')}
                             className={`p-2 rounded-lg transition-colors ${
-                                viewMode === 'list' ? 'bg-[#0048ad] text-white' : 'bg-white text-slate-600 hover:bg-slate-100'
+                                viewMode === 'list' ? 'bg-primary text-primary-foreground shadow' : 'bg-card text-muted-foreground hover:bg-muted/60'
                             }`}
                         >
                             <List className="w-5 h-5" />
@@ -288,7 +296,7 @@ export function TaskManagementPage() {
                         <button
                             onClick={() => setViewMode('kanban')}
                             className={`p-2 rounded-lg transition-colors ${
-                                viewMode === 'kanban' ? 'bg-[#0048ad] text-white' : 'bg-white text-slate-600 hover:bg-slate-100'
+                                viewMode === 'kanban' ? 'bg-primary text-primary-foreground shadow' : 'bg-card text-muted-foreground hover:bg-muted/60'
                             }`}
                         >
                             <LayoutGrid className="w-5 h-5" />
@@ -299,14 +307,14 @@ export function TaskManagementPage() {
                 {/* Task List */}
                 {isLoading ? (
                     <div className="flex items-center justify-center h-64">
-                        <Loader2 className="w-8 h-8 animate-spin text-[#0048ad]" />
+                        <Loader2 className="w-8 h-8 animate-spin text-primary" />
                     </div>
                 ) : (
                     <>
                         {viewMode === 'list' ? (
-                            <div className="bg-white rounded-lg border border-slate-200 overflow-hidden">
+                            <div className="bg-card rounded-lg border border-border overflow-hidden">
                                 <table className="w-full">
-                                    <thead className="bg-slate-50 border-b border-slate-200">
+                                    <thead className="bg-muted/60 border-b border-border/70">
                                         <tr>
                                             <th className="px-4 py-3 w-12">
                                                 <Checkbox
@@ -314,12 +322,12 @@ export function TaskManagementPage() {
                                                     onCheckedChange={selectAllTasks}
                                                 />
                                             </th>
-                                            <th className="px-4 py-3 text-left text-sm font-medium text-slate-600">Task</th>
-                                            <th className="px-4 py-3 text-left text-sm font-medium text-slate-600">Status</th>
-                                            <th className="px-4 py-3 text-left text-sm font-medium text-slate-600">Priority</th>
-                                            <th className="px-4 py-3 text-left text-sm font-medium text-slate-600">Client</th>
-                                            <th className="px-4 py-3 text-left text-sm font-medium text-slate-600">Assignees</th>
-                                            <th className="px-4 py-3 text-left text-sm font-medium text-slate-600">Due Date</th>
+                                            <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">Task</th>
+                                            <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">Status</th>
+                                            <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">Priority</th>
+                                            <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">Client</th>
+                                            <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">Assignees</th>
+                                            <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">Due Date</th>
                                             <th className="px-4 py-3 w-12"></th>
                                         </tr>
                                     </thead>
@@ -330,7 +338,7 @@ export function TaskManagementPage() {
                                             const isSelected = selectedTasks.has(task.id)
 
                                             return (
-                                                <tr key={task.id} className="border-b border-slate-100 hover:bg-slate-50">
+                                                <tr key={task.id} className="border-b border-border/70 hover:bg-muted/40">
                                                     <td className="px-4 py-3">
                                                         <Checkbox
                                                             checked={isSelected}
@@ -340,8 +348,8 @@ export function TaskManagementPage() {
                                                     <td className="px-4 py-3">
                                                         <div className="flex items-start gap-3">
                                                             <div>
-                                                                <p className="font-medium text-slate-900">{task.title}</p>
-                                                                <p className="text-sm text-slate-500 line-clamp-1">{task.description}</p>
+                                                                <p className="font-medium text-foreground">{task.title}</p>
+                                                                <p className="text-sm text-muted-foreground line-clamp-1">{task.description}</p>
                                                             </div>
                                                         </div>
                                                     </td>
@@ -351,7 +359,7 @@ export function TaskManagementPage() {
                                                             onValueChange={(value) => handleQuickStatusChange(task.id, value as TaskStatus)}
                                                             disabled={updateTaskStatus.isPending}
                                                         >
-                                                            <SelectTrigger className={`h-8 w-32 text-xs ${status.bg} ${status.color} border-0`}>
+                                                            <SelectTrigger className={`h-8 w-32 text-xs ${status.bgClass} ${status.textClass} border-0`}>
                                                                 <SelectValue />
                                                             </SelectTrigger>
                                                             <SelectContent>
@@ -363,34 +371,34 @@ export function TaskManagementPage() {
                                                             </SelectContent>
                                                         </Select>
                                                         {/* Progress bar */}
-                                                        <div className="w-full h-1 bg-slate-100 rounded-full mt-1.5 overflow-hidden">
+                                                        <div className="w-full h-1 bg-muted rounded-full mt-1.5 overflow-hidden">
                                                             <div
-                                                                className="h-full bg-[#0048ad] rounded-full transition-all"
+                                                                className="h-full bg-primary rounded-full transition-all"
                                                                 style={{ width: `${getTaskProgress(task.status)}%` }}
                                                             />
                                                         </div>
                                                     </td>
                                                     <td className="px-4 py-3">
-                                                        <span className={`text-sm font-medium ${priority.color}`}>
+                                                        <span className={`text-sm font-medium ${priority.colorClass}`}>
                                                             {priority.label}
                                                         </span>
                                                     </td>
                                                     <td className="px-4 py-3">
-                                                        <span className="text-sm text-slate-600">{getClientName(task.clientId)}</span>
+                                                        <span className="text-sm text-muted-foreground">{getClientName(task.clientId)}</span>
                                                     </td>
                                                     <td className="px-4 py-3">
-                                                        <span className="text-sm text-slate-600">{getAssigneeNames(task.assignees)}</span>
+                                                        <span className="text-sm text-muted-foreground">{getAssigneeNames(task.assignees)}</span>
                                                     </td>
                                                     <td className="px-4 py-3">
-                                                        <span className={`text-sm ${new Date(task.dueDate) < new Date() && task.status !== TaskStatus.COMPLETE ? 'text-red-600 font-medium' : 'text-slate-600'}`}>
+                                                        <span className={`text-sm ${new Date(task.dueDate) < new Date() && task.status !== TaskStatus.COMPLETE ? 'text-destructive font-medium' : 'text-muted-foreground'}`}>
                                                             {new Date(task.dueDate).toLocaleDateString()}
                                                         </span>
                                                     </td>
                                                     <td className="px-4 py-3">
                                                         <DropdownMenu>
                                                             <DropdownMenuTrigger asChild>
-                                                                <button className="h-8 w-8 flex items-center justify-center rounded-lg hover:bg-slate-100">
-                                                                    <MoreHorizontal className="w-4 h-4 text-slate-500" />
+                                                                <button className="h-8 w-8 flex items-center justify-center rounded-lg hover:bg-muted/60">
+                                                                    <MoreHorizontal className="w-4 h-4 text-muted-foreground" />
                                                                 </button>
                                                             </DropdownMenuTrigger>
                                                             <DropdownMenuContent align="end">
@@ -414,7 +422,7 @@ export function TaskManagementPage() {
 
                                 {/* Pagination */}
                                 {totalPages > 1 && (
-                                    <div className="flex items-center justify-between px-4 py-3 border-t border-slate-200">
+                                    <div className="flex items-center justify-between px-4 py-3 border-t border-border/70">
                                         <button
                                             onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
                                             disabled={currentPage === 1}
@@ -422,7 +430,7 @@ export function TaskManagementPage() {
                                         >
                                             <ChevronLeft className="w-4 h-4" /> Previous
                                         </button>
-                                        <span className="text-sm text-slate-600">
+                                        <span className="text-sm text-muted-foreground">
                                             Page {currentPage} of {totalPages}
                                         </span>
                                         <button
@@ -438,20 +446,20 @@ export function TaskManagementPage() {
                         ) : (
                             <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4">
                                 {Object.values(TaskStatus).map((status) => (
-                                    <div key={status} className="bg-slate-100 rounded-lg p-4">
-                                        <h3 className="font-medium text-slate-700 mb-4">{statusConfig[status].label}</h3>
+                                    <div key={status} className="bg-muted/60 rounded-lg p-4 border border-border/60">
+                                        <h3 className="font-medium text-muted-foreground mb-4">{statusConfig[status].label}</h3>
                                         <div className="space-y-3">
                                             {filteredTasks
                                                 .filter((t) => t.status === status)
                                                 .map((task) => (
                                                     <Card key={task.id} className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => navigate(`/tasks/${task.id}`)}>
                                                         <CardContent className="p-4">
-                                                            <p className="font-medium text-slate-900 mb-2">{task.title}</p>
-                                                            <div className="flex items-center gap-2 text-sm text-slate-500">
+                                                            <p className="font-medium text-foreground mb-2">{task.title}</p>
+                                                            <div className="flex items-center gap-2 text-sm text-muted-foreground">
                                                                 <Flag className="w-4 h-4" />
                                                                 {priorityConfig[task.priority].label}
                                                             </div>
-                                                            <div className="flex items-center gap-2 text-sm text-slate-500 mt-1">
+                                                            <div className="flex items-center gap-2 text-sm text-muted-foreground mt-1">
                                                                 <Calendar className="w-4 h-4" />
                                                                 {new Date(task.dueDate).toLocaleDateString()}
                                                             </div>

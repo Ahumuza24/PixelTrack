@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { Toaster } from 'sonner'
 import { AuthProvider } from '@/features/auth/AuthContext'
+import { ThemeProvider } from '@/features/theme/ThemeProvider'
 import { App } from './App'
 import './index.css'
 
@@ -21,10 +22,12 @@ if (!rootEl) throw new Error('Root element not found')
 createRoot(rootEl).render(
   <StrictMode>
     <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <App />
-        <Toaster position="top-right" richColors closeButton />
-      </AuthProvider>
+      <ThemeProvider>
+        <AuthProvider>
+          <App />
+          <Toaster position="top-right" richColors closeButton />
+        </AuthProvider>
+      </ThemeProvider>
     </QueryClientProvider>
   </StrictMode>,
 )
