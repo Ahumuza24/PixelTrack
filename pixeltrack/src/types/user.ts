@@ -21,6 +21,12 @@ export interface UserProfile {
     clientId?: string
     /** User's profile photo URL */
     photoURL?: string
+    /** Optional professional title shown on profile surfaces */
+    jobTitle?: string | null
+    /** Optional city/country location */
+    location?: string | null
+    /** Short bio/summary */
+    bio?: string | null
     createdAt: string
     updatedAt: string
 }

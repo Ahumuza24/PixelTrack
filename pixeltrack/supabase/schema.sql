@@ -31,6 +31,9 @@ create table if not exists public.profiles (
     display_name text not null,
     role text not null default 'employee' check (role in ('admin', 'employee', 'client')),
     photo_url text,
+    job_title text,
+    location text,
+    bio text,
     client_id uuid references public.clients(id) on delete set null,
     created_at timestamptz default now(),
     updated_at timestamptz default now()

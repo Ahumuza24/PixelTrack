@@ -1,3 +1,34 @@
+export type NotificationChannelId = 'mentions' | 'projects' | 'summaries'
+
+export interface NotificationChannelPreference {
+    email: boolean
+    push: boolean
+}
+
+export type NotificationChannelPreferenceMap = Record<NotificationChannelId, NotificationChannelPreference>
+
+export interface QuietHoursWindow {
+    start: string
+    end: string
+}
+
+export interface NotificationPreferences {
+    userId: string
+    inAppEnabled: boolean
+    emailEnabled: boolean
+    taskAssignments: boolean
+    statusUpdates: boolean
+    comments: boolean
+    files: boolean
+    annotations: boolean
+    reports: boolean
+    channelPreferences: NotificationChannelPreferenceMap
+    digestFrequency: 'immediate' | 'daily' | 'weekly'
+    quietHours: QuietHoursWindow
+    createdAt: string
+    updatedAt: string
+}
+
 export type NotificationType =
     | 'task_assigned'
     | 'task_status_updated'

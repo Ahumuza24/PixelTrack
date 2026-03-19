@@ -59,6 +59,7 @@ CREATE TABLE IF NOT EXISTS public.notification_preferences (
     files boolean NOT NULL DEFAULT true,
     annotations boolean NOT NULL DEFAULT true,
     reports boolean NOT NULL DEFAULT true,
+    channel_preferences jsonb NOT NULL DEFAULT '{}'::jsonb,
     digest_frequency text NOT NULL DEFAULT 'immediate',
     quiet_hours jsonb NOT NULL DEFAULT jsonb_build_object('start', '22:00', 'end', '07:00'),
     created_at timestamptz NOT NULL DEFAULT timezone('utc', now()),

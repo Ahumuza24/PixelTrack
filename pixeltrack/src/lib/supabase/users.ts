@@ -27,6 +27,9 @@ export async function getUserProfile(uid: string): Promise<UserProfile | null> {
         role: profile.role as UserRole,
         clientId: profile.client_id ?? undefined,
         photoURL: profile.photo_url,
+        jobTitle: profile.job_title ?? null,
+        location: profile.location ?? null,
+        bio: profile.bio ?? null,
         createdAt: profile.created_at,
         updatedAt: profile.updated_at,
     }
@@ -62,12 +65,15 @@ export async function createUserProfile(
  */
 export async function updateUserProfile(
     uid: string,
-    data: Partial<Pick<UserProfile, 'email' | 'displayName' | 'photoURL'>>,
+    data: Partial<Pick<UserProfile, 'email' | 'displayName' | 'photoURL' | 'jobTitle' | 'location' | 'bio'>>,
 ): Promise<void> {
     const updateData: Record<string, unknown> = {}
     if (data.email) updateData.email = data.email
     if (data.displayName !== undefined) updateData.display_name = data.displayName
     if (data.photoURL !== undefined) updateData.photo_url = data.photoURL
+    if (data.jobTitle !== undefined) updateData.job_title = data.jobTitle
+    if (data.location !== undefined) updateData.location = data.location
+    if (data.bio !== undefined) updateData.bio = data.bio
 
     const { error } = await supabase
         .from('profiles')
@@ -97,6 +103,9 @@ export async function getAllUserProfiles(): Promise<UserProfile[]> {
         role: profile.role as UserRole,
         clientId: profile.client_id ?? undefined,
         photoURL: profile.photo_url,
+        jobTitle: profile.job_title ?? null,
+        location: profile.location ?? null,
+        bio: profile.bio ?? null,
         createdAt: profile.created_at,
         updatedAt: profile.updated_at,
     }))
@@ -124,6 +133,9 @@ export async function getUserProfilesByRole(role: UserRole): Promise<UserProfile
         role: profile.role as UserRole,
         clientId: profile.client_id ?? undefined,
         photoURL: profile.photo_url,
+        jobTitle: profile.job_title ?? null,
+        location: profile.location ?? null,
+        bio: profile.bio ?? null,
         createdAt: profile.created_at,
         updatedAt: profile.updated_at,
     }))

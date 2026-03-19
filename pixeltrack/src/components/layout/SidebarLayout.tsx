@@ -14,6 +14,7 @@ import {
     X,
     LogOut,
     ChevronRight,
+    Settings,
 } from 'lucide-react'
 import { useAuth } from '@/features/auth/useAuth'
 import { signOut } from '@/lib/supabase/auth'
@@ -88,6 +89,12 @@ const navigation: NavItem[] = [
         label: 'Project Analytics',
         path: ROUTES.PROJECT_ANALYTICS,
         icon: LineChart,
+        roles: [UserRole.ADMIN],
+    },
+    {
+        label: 'Settings',
+        path: ROUTES.ADMIN_SETTINGS,
+        icon: Settings,
         roles: [UserRole.ADMIN],
     },
     {
