@@ -9,7 +9,7 @@ import {
     deleteProject,
     getProjectTaskCounts,
 } from '@/lib/supabase/projects'
-import type { ProjectFilters } from '@/types'
+import type { ProjectFilters, ProjectWithClientAndAnalytics } from '@/types'
 
 const PROJECTS_QUERY_KEY = 'projects'
 
@@ -39,7 +39,7 @@ export function useProjects(filters?: ProjectFilters) {
  * ```
  */
 export function useProjectsWithAnalytics(filters?: ProjectFilters) {
-    return useQuery({
+    return useQuery<ProjectWithClientAndAnalytics[]>({
         queryKey: [PROJECTS_QUERY_KEY, 'with-analytics', filters],
         queryFn: async () => {
             const projectsWithClient = await getProjectsWithClient(filters)
