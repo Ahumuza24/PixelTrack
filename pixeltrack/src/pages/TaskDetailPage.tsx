@@ -9,18 +9,8 @@
  * Route: /tasks/:taskId
  */
 
-import { useParams, useNavigate } from 'react-router-dom'
-import { useState } from 'react'
-import {
-    ArrowLeft,
-    Calendar,
-    Users,
-    Building2,
-    Clock,
-    Edit2,
-    Trash2,
-    CheckSquare,
-} from 'lucide-react'
+import { useParams } from 'react-router-dom'
+import { Calendar, Users, Building2, Clock, CheckSquare, ArrowLeft } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import {
@@ -41,43 +31,58 @@ import {
     AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
 import { SidebarLayout } from '@/components/layout/SidebarLayout'
-import { useTask, useUpdateTask, useDeleteTask } from '@/features/tasks/hooks/useTasks'
-import { useTaskFiles } from '@/features/tasks/hooks/useTaskFiles'
-import { useClients } from '@/features/clients'
-import { useUsers } from '@/features/users'
-import { useProjects } from '@/features/projects/hooks/useProjects'
-import { useAuth } from '@/features/auth/useAuth'
-import { UserRole, getTaskProgress } from '@/types'
 import { TaskFilesSection } from '@/features/tasks/components/TaskFilesSection'
 import { TaskCommentsSection } from '@/features/tasks/components/TaskCommentsSection'
 import { TaskForm } from '@/features/tasks/components/TaskForm'
-import type { TaskFormValues } from '@/features/tasks/schemas/taskSchema'
 import { TaskStatusBadge } from '@/components/status'
+import { useTaskDetail } from '@/features/tasks/hooks/useTaskDetail'
+import { TaskDetailHeader } from '@/features/tasks/components/TaskDetailHeader'
+import { UserRole } from '@/types'
 
 export function TaskDetailPage() {
     const { taskId } = useParams<{ taskId: string }>()
-    const navigate = useNavigate()
-    const { user } = useAuth()
-    const { data: task, isLoading } = useTask(taskId || null)
-    const { data: clients } = useClients()
-    const { data: users } = useUsers()
-    const { data: projects } = useProjects()
-    const { data: taskFiles, isLoading: isTaskFilesLoading } = useTaskFiles(task?.id ?? null)
-    const updateTask = useUpdateTask()
-    const deleteTask = useDeleteTask()
+    const {
+        task,
+        client,
+        project,
+        users,
+        assignees,
+        employees,
+        taskFiles,
+        isTaskFilesLoading,
+        isLoading,
+        notFound,
+        progressPercent,
+        canEdit,
+        canManageFiles,
+        dialogState,
+        handlers,
+        clients,
+        projects,
+        currentUser,
+        mutationState,
+    } = useTaskDetail(taskId)
 
-    const [isEditOpen, setIsEditOpen] = useState(false)
-    const [isDeleteOpen, setIsDeleteOpen] = useState(false)
+    const {
+        isEditOpen,
+        openEditDialog,
+        closeEditDialog,
+        isDeleteOpen,
+        openDeleteDialog,
+        closeDeleteDialog,
+    } = dialogState
+    const { handleBack, handleEditSubmit, handleDeleteTask } = handlers
 
     // Loading state
     if (isLoading) {
         return (
             <SidebarLayout>
                 <div className="min-h-screen bg-background p-8">
-                    <div className="max-w-4xl mx-auto">
-                        <div className="h-8 w-48 bg-muted rounded animate-pulse mb-6" />
-                        <div className="bg-card rounded-xl shadow-sm border border-border p-8">
-                            <div className="h-12 w-3/4 bg-muted rounded animate-pulse mb-4" />
+                    <div className="max-w-5xl mx-auto space-y-4">
+                        <div className="h-8 w-48 bg-muted rounded animate-pulse" />
+                        <div className="bg-card rounded-xl shadow-sm border border-border p-8 space-y-4">
+                            <div className="h-6 w-3/4 bg-muted rounded animate-pulse" />
+                            <div className="h-6 w-2/3 bg-muted rounded animate-pulse" />
                             <div className="h-32 bg-muted rounded animate-pulse" />
                         </div>
                     </div>
@@ -87,7 +92,7 @@ export function TaskDetailPage() {
     }
 
     // Task not found
-    if (!task) {
+    if (notFound || !task) {
         return (
             <SidebarLayout>
                 <div className="min-h-screen bg-background p-8">
@@ -95,7 +100,7 @@ export function TaskDetailPage() {
                         <CheckSquare className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
                         <h1 className="text-2xl font-bold text-foreground mb-2">Task Not Found</h1>
                         <p className="text-muted-foreground mb-4">The task you are looking for does not exist.</p>
-                        <Button onClick={() => navigate(-1)}>
+                        <Button onClick={handleBack}>
                             <ArrowLeft className="w-4 h-4 mr-2" />
                             Go Back
                         </Button>
@@ -106,62 +111,20 @@ export function TaskDetailPage() {
     }
 
     // Get related data now that task exists
-    const client = clients?.find((c) => c.id === task.clientId)
-    const assignees = users?.filter((u) => task.assignees.includes(u.uid)) || []
-    const employees = users?.filter((u) => u.role !== UserRole.CLIENT) || []
-    const project = projects?.find((p) => p.id === task.projectId)
-
-    const canEdit = user?.role === UserRole.ADMIN ||
-        (user?.role === UserRole.EMPLOYEE && task.assignees.includes(user.uid))
-
-    const handleEditSubmit = async (values: TaskFormValues) => {
-        await updateTask.mutateAsync({ id: task.id, ...values })
-        setIsEditOpen(false)
-    }
-
-    const canManageFiles = Boolean(
-        user && (
-            user.role === UserRole.ADMIN ||
-            (user.role === UserRole.EMPLOYEE && task.assignees.includes(user.uid))
-        ),
-    )
-
-    const progressPercent = getTaskProgress(task.status)
-
     return (
         <SidebarLayout>
             <div className="min-h-screen bg-gradient-to-b from-background via-background/95 to-background">
-                <div className="bg-card/80 border-b border-border backdrop-blur">
-                    <div className="max-w-5xl mx-auto px-4 sm:px-6 py-4 flex items-center justify-between">
-                        <div>
-                            <p className="text-sm font-semibold text-muted-foreground uppercase tracking-widest">Task Detail</p>
-                        </div>
-                        {canEdit && (
-                            <div className="flex gap-2">
-                                <Button variant="outline" size="sm" onClick={() => setIsEditOpen(true)}>
-                                    <Edit2 className="w-4 h-4 mr-2" />
-                                    Edit
-                                </Button>
-                                <Button
-                                    variant="outline"
-                                    size="sm"
-                                    className="text-red-600"
-                                    onClick={() => setIsDeleteOpen(true)}
-                                >
-                                    <Trash2 className="w-4 h-4 mr-2" />
-                                    Delete
-                                </Button>
-                            </div>
-                        )}
-                    </div>
-                </div>
+                <TaskDetailHeader
+                    title={task.title}
+                    onBack={handleBack}
+                    canEdit={canEdit}
+                    onEdit={openEditDialog}
+                    onDelete={openDeleteDialog}
+                />
 
                 <div className="max-w-5xl mx-auto px-4 sm:px-6 py-8 space-y-8">
-
-
                     <div>
-                        <h1 className="text-3xl font-bold text-foreground tracking-tight">{task.title}</h1>
-                        <p className="text-base text-muted-foreground mt-3 whitespace-pre-wrap">
+                        <p className="text-base text-muted-foreground whitespace-pre-wrap">
                             {task.description || 'No description added yet.'}
                         </p>
                     </div>
@@ -228,15 +191,15 @@ export function TaskDetailPage() {
                                     files={taskFiles}
                                     isLoading={isTaskFilesLoading}
                                     canManageFiles={canManageFiles}
-                                    currentUserId={user?.uid ?? null}
-                                    currentUserRole={user?.role ?? UserRole.CLIENT}
+                                    currentUserId={currentUser?.uid ?? null}
+                                    currentUserRole={currentUser?.role ?? UserRole.CLIENT}
                                 />
                             </div>
 
                             <TaskCommentsSection
                                 taskId={task.id}
                                 users={users || []}
-                                currentUser={user}
+                                currentUser={currentUser}
                             />
 
                             <div className="rounded-2xl border border-border bg-card p-6 shadow-sm">
@@ -335,7 +298,7 @@ export function TaskDetailPage() {
                     </section>
                 </div>
 
-                <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
+                <Dialog open={isEditOpen} onOpenChange={(open) => (open ? openEditDialog() : closeEditDialog())}>
                     <DialogContent className="max-w-2xl">
                         <DialogHeader>
                             <DialogTitle>Edit Task</DialogTitle>
@@ -343,17 +306,17 @@ export function TaskDetailPage() {
                         </DialogHeader>
                         <TaskForm
                             task={task}
-                            clients={clients || []}
-                            projects={projects || []}
+                            clients={clients}
+                            projects={projects}
                             employees={employees}
                             onSubmit={handleEditSubmit}
-                            onCancel={() => setIsEditOpen(false)}
-                            isSubmitting={updateTask.isPending}
+                            onCancel={closeEditDialog}
+                            isSubmitting={mutationState.isUpdating}
                         />
                     </DialogContent>
                 </Dialog>
 
-                <AlertDialog open={isDeleteOpen} onOpenChange={setIsDeleteOpen}>
+                <AlertDialog open={isDeleteOpen} onOpenChange={(open) => (open ? openDeleteDialog() : closeDeleteDialog())}>
                     <AlertDialogContent>
                         <AlertDialogHeader>
                             <AlertDialogTitle>Delete Task</AlertDialogTitle>
@@ -362,16 +325,13 @@ export function TaskDetailPage() {
                             </AlertDialogDescription>
                         </AlertDialogHeader>
                         <AlertDialogFooter>
-                            <AlertDialogCancel onClick={() => setIsDeleteOpen(false)}>Cancel</AlertDialogCancel>
+                            <AlertDialogCancel onClick={closeDeleteDialog}>Cancel</AlertDialogCancel>
                             <AlertDialogAction
                                 className="bg-red-600 hover:bg-red-700"
-                                onClick={async () => {
-                                    await deleteTask.mutateAsync(task.id)
-                                    setIsDeleteOpen(false)
-                                    navigate('/admin/tasks')
-                                }}
+                                onClick={handleDeleteTask}
+                                disabled={mutationState.isDeleting}
                             >
-                                {deleteTask.isPending ? 'Deleting…' : 'Delete Task'}
+                                {mutationState.isDeleting ? 'Deleting…' : 'Delete Task'}
                             </AlertDialogAction>
                         </AlertDialogFooter>
                     </AlertDialogContent>

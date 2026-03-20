@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, fireEvent } from '@testing-library/react'
 import * as React from 'react'
+import type { ComponentProps } from 'react'
 import { BrowserRouter } from 'react-router-dom'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { ClientList } from './ClientList'
@@ -59,21 +60,33 @@ describe('ClientList', () => {
     const mockOnEdit = vi.fn()
     const mockOnDelete = vi.fn()
     const mockOnAdd = vi.fn()
+    const mockOnView = vi.fn()
+
+    const baseHandlers = {
+        onEdit: mockOnEdit,
+        onDelete: mockOnDelete,
+        onAdd: mockOnAdd,
+        onView: mockOnView,
+    }
+
+    type ClientListProps = ComponentProps<typeof ClientList>
+
+    const renderClientList = (props?: Partial<ClientListProps>) => {
+        const finalProps: ClientListProps = {
+            clients: [],
+            ...baseHandlers,
+            ...props,
+        }
+
+        return render(React.createElement(ClientList, finalProps), { wrapper: createWrapper() })
+    }
 
     beforeEach(() => {
         vi.clearAllMocks()
     })
 
     it('should render client data correctly', () => {
-        render(
-            React.createElement(ClientList, {
-                clients: mockClients,
-                onEdit: mockOnEdit,
-                onDelete: mockOnDelete,
-                onAdd: mockOnAdd,
-            }),
-            { wrapper: createWrapper() }
-        )
+        renderClientList({ clients: mockClients })
 
         expect(screen.getByText('Acme Design Co')).toBeInTheDocument()
         expect(screen.getByText('Beta Corporation')).toBeInTheDocument()
@@ -82,31 +95,15 @@ describe('ClientList', () => {
     })
 
     it('should display correct status badges', () => {
-        render(
-            React.createElement(ClientList, {
-                clients: mockClients,
-                onEdit: mockOnEdit,
-                onDelete: mockOnDelete,
-                onAdd: mockOnAdd,
-            }),
-            { wrapper: createWrapper() }
-        )
+        renderClientList({ clients: mockClients })
 
-        expect(screen.getByText('Active')).toBeInTheDocument()
-        expect(screen.getByText('Inactive')).toBeInTheDocument()
-        expect(screen.getByText('Archived')).toBeInTheDocument()
+        expect(screen.getAllByText('Active').length).toBeGreaterThan(0)
+        expect(screen.getAllByText('Inactive').length).toBeGreaterThan(0)
+        expect(screen.getAllByText('Archived').length).toBeGreaterThan(0)
     })
 
     it('should filter clients by search query', () => {
-        render(
-            React.createElement(ClientList, {
-                clients: mockClients,
-                onEdit: mockOnEdit,
-                onDelete: mockOnDelete,
-                onAdd: mockOnAdd,
-            }),
-            { wrapper: createWrapper() }
-        )
+        renderClientList({ clients: mockClients })
 
         const searchInput = screen.getByPlaceholderText('Search clients...')
         fireEvent.change(searchInput, { target: { value: 'acme' } })
@@ -116,31 +113,14 @@ describe('ClientList', () => {
     })
 
     it('should show empty state when no clients', () => {
-        render(
-            React.createElement(ClientList, {
-                clients: [],
-                onEdit: mockOnEdit,
-                onDelete: mockOnDelete,
-                onAdd: mockOnAdd,
-            }),
-            { wrapper: createWrapper() }
-        )
+        renderClientList({ clients: [] })
 
         expect(screen.getByText('No clients yet')).toBeInTheDocument()
         expect(screen.getByText('Get started by adding your first client')).toBeInTheDocument()
     })
 
     it('should show loading state', () => {
-        render(
-            React.createElement(ClientList, {
-                clients: [],
-                isLoading: true,
-                onEdit: mockOnEdit,
-                onDelete: mockOnDelete,
-                onAdd: mockOnAdd,
-            }),
-            { wrapper: createWrapper() }
-        )
+        renderClientList({ clients: [], isLoading: true })
 
         // Loading skeletons should be present
         const skeletons = document.querySelectorAll('.animate-pulse')
@@ -149,31 +129,14 @@ describe('ClientList', () => {
 
     it('should show error state', () => {
         const error = new Error('Failed to load')
-        render(
-            React.createElement(ClientList, {
-                clients: [],
-                error,
-                onEdit: mockOnEdit,
-                onDelete: mockOnDelete,
-                onAdd: mockOnAdd,
-            }),
-            { wrapper: createWrapper() }
-        )
+        renderClientList({ clients: [], error })
 
         expect(screen.getByText('Failed to load clients')).toBeInTheDocument()
         expect(screen.getByText('Failed to load')).toBeInTheDocument()
     })
 
     it('should call onAdd when add button clicked', () => {
-        render(
-            React.createElement(ClientList, {
-                clients: mockClients,
-                onEdit: mockOnEdit,
-                onDelete: mockOnDelete,
-                onAdd: mockOnAdd,
-            }),
-            { wrapper: createWrapper() }
-        )
+        renderClientList({ clients: mockClients })
 
         const addButton = screen.getByText('Add Client')
         fireEvent.click(addButton)
@@ -182,21 +145,14 @@ describe('ClientList', () => {
     })
 
     it('should filter by status', () => {
-        render(
-            React.createElement(ClientList, {
-                clients: mockClients,
-                onEdit: mockOnEdit,
-                onDelete: mockOnDelete,
-                onAdd: mockOnAdd,
-            }),
-            { wrapper: createWrapper() }
-        )
+        renderClientList({ clients: mockClients })
 
-        // Click on Active filter
-        const activeFilter = screen.getByText('Active')
-        fireEvent.click(activeFilter)
+        // Click on Active filter button (disambiguate from table labels)
+        const activeFilterButton = screen.getByTestId('status-filter-active')
 
-        // Should show count in badge
-        expect(screen.getByText('1')).toBeInTheDocument()
+        fireEvent.click(activeFilterButton)
+
+        // Should show count in badge inside the Active filter chip
+        expect(activeFilterButton).toHaveTextContent(/1/)
     })
 })

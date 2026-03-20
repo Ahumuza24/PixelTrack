@@ -139,6 +139,7 @@ export function ClientList({
                 {statusFilters.map((filter) => (
                     <button
                         key={filter.label}
+                        data-testid={`status-filter-${(filter.label || 'all').toLowerCase()}`}
                         onClick={() => setStatusFilter(filter.value)}
                         className={cn(
                             'px-3 py-1.5 rounded-full text-sm font-medium transition-all flex items-center gap-2',

@@ -1,56 +1,25 @@
-import { useState } from 'react'
-import { Navigate, useLocation } from 'react-router-dom'
-import { useForm } from 'react-hook-form'
-import { zodResolver } from '@hookform/resolvers/zod'
+import { Navigate } from 'react-router-dom'
 import { Eye, EyeOff, Mail, Lock, LogIn } from 'lucide-react'
-import { toast } from 'sonner'
-import { signIn } from '@/lib/supabase/auth'
-import { loginSchema, type LoginFormValues } from '@/features/auth/schemas/loginSchema'
-import { useAuth } from '@/features/auth/useAuth'
-import { ROLE_HOME } from '@/lib/constants'
 import { cn } from '@/lib/utils'
+import { useLoginPage } from '@/features/auth/hooks/useLoginPage'
 
 /**
  * Login page — the entry point for all unauthenticated users.
  * Implements email/password auth with React Hook Form + Zod validation.
  */
-type LoginLocationState = {
-    from?: string
-}
-
 export function LoginPage() {
-    const location = useLocation()
-    const { user } = useAuth()
-    const [showPassword, setShowPassword] = useState(false)
-
+    const { form, showPassword, toggleShowPassword, redirectTarget, handlers } = useLoginPage()
     const {
         register,
         handleSubmit,
         formState: { errors, isSubmitting },
-    } = useForm<LoginFormValues>({
-        resolver: zodResolver(loginSchema),
-    })
+    } = form
 
-    // Redirect already-authenticated users to their home
-    if (user) {
-        const state = location.state as LoginLocationState | null
-        const redirectTarget = state?.from ?? ROLE_HOME[user.role]
+    if (redirectTarget) {
         return <Navigate to={redirectTarget} replace />
     }
 
-    const onSubmit = async (data: LoginFormValues) => {
-        try {
-            await signIn(data.email, data.password)
-            // AuthContext will update; redirect happens via AuthGuard / useEffect in AuthContext
-            // We explicitly navigate after auth resolves in context, handled below
-        } catch (err: unknown) {
-            const message =
-                err instanceof Error && err.message.includes('invalid-credential')
-                    ? 'Invalid email or password. Please try again.'
-                    : 'Sign in failed. Please try again.'
-            toast.error(message)
-        }
-    }
+    const { handleSubmitForm, handleForgotPassword } = handlers
 
     return (
         <div className="relative flex h-screen w-full flex-col bg-white overflow-hidden">
@@ -94,7 +63,7 @@ export function LoginPage() {
                         <p className="text-slate-500 mt-1">Please enter your details to sign in.</p>
                     </div>
 
-                    <form className="space-y-5" onSubmit={handleSubmit(onSubmit)} noValidate>
+                    <form className="space-y-5" onSubmit={handleSubmit(handleSubmitForm)} noValidate>
                         {/* Email Field */}
                         <div className="space-y-2">
                             <label className="block text-sm font-medium text-slate-700" htmlFor="email">
@@ -131,7 +100,7 @@ export function LoginPage() {
                                 <button
                                     type="button"
                                     className="text-xs font-semibold text-cobalt hover:underline transition-all"
-                                    onClick={() => toast.info('Password reset is not yet available. Contact your admin.')}
+                                    onClick={handleForgotPassword}
                                 >
                                     Forgot Password?
                                 </button>
@@ -154,7 +123,7 @@ export function LoginPage() {
                                     type="button"
                                     aria-label={showPassword ? 'Hide password' : 'Show password'}
                                     className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 cursor-pointer"
-                                    onClick={() => setShowPassword((v) => !v)}
+                                    onClick={toggleShowPassword}
                                 >
                                     {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                                 </button>

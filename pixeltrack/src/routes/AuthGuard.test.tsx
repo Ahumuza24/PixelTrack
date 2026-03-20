@@ -26,7 +26,7 @@ function renderAuthGuard({
     loading?: boolean
     initialPath?: string
 }) {
-    const contextValue = { user, firebaseUser: null, loading }
+    const contextValue = { user, supabaseUser: null, loading }
 
     return render(
         <AuthContext.Provider value={contextValue}>

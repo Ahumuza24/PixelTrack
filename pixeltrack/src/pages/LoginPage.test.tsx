@@ -4,13 +4,13 @@ import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router-dom'
 import { LoginPage } from '@/pages/LoginPage'
 import { AuthContext } from '@/features/auth/AuthContext'
-import * as firebaseAuth from '@/lib/firebase/auth'
+import * as supabaseAuth from '@/lib/supabase/auth'
 
-// Mock Firebase auth service
-vi.mock('@/lib/firebase/auth')
+// Mock Supabase auth service
+vi.mock('@/lib/supabase/auth')
 
 const renderLoginPage = (user = null) => {
-    const contextValue = { user, firebaseUser: null, loading: false }
+    const contextValue = { user, supabaseUser: null, loading: false }
     return render(
         <AuthContext.Provider value={contextValue}>
             <MemoryRouter>
@@ -64,8 +64,8 @@ describe('LoginPage', () => {
     })
 
     it('disables the submit button while submitting', async () => {
-        vi.mocked(firebaseAuth.signIn).mockImplementation(
-            () => new Promise<never>(() => { }), // Never resolves — simulates pending
+        vi.mocked(supabaseAuth.signIn).mockImplementation(
+            () => new Promise<never>(() => {}), // Never resolves — simulates pending
         )
         renderLoginPage()
         const user = userEvent.setup()
@@ -78,14 +78,14 @@ describe('LoginPage', () => {
     })
 
     it('calls signIn with correct credentials on valid submission', async () => {
-        vi.mocked(firebaseAuth.signIn).mockResolvedValue({} as never)
+        vi.mocked(supabaseAuth.signIn).mockResolvedValue({} as never)
         renderLoginPage()
         const user = userEvent.setup()
         await user.type(screen.getByLabelText(/email/i), 'admin@agency.com')
         await user.type(screen.getByLabelText(/^password$/i), 'securepass')
         await user.click(screen.getByRole('button', { name: /sign in/i }))
         await waitFor(() => {
-            expect(firebaseAuth.signIn).toHaveBeenCalledWith('admin@agency.com', 'securepass')
+            expect(supabaseAuth.signIn).toHaveBeenCalledWith('admin@agency.com', 'securepass')
         })
     })
 })

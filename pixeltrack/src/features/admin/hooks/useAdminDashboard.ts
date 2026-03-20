@@ -48,7 +48,7 @@ export function useAdminDashboard() {
         isLoading: searchLoading,
         isError: searchError,
     } = useAdminSearch(searchQuery)
-    const normalizedSearchResults = searchResults ?? []
+    const normalizedSearchResults = useMemo(() => searchResults ?? [], [searchResults])
 
     const handleResultNavigation = useCallback(
         async (result: AdminSearchResultItem) => {
@@ -179,6 +179,7 @@ export function useAdminDashboard() {
     const handleTasksNavigate = useCallback(() => navigate(ROUTES.ADMIN_TASKS), [navigate])
     const handleProjectsNavigate = useCallback(() => navigate(ROUTES.ADMIN_PROJECTS), [navigate])
     const handleTaskSelect = useCallback((taskId: string) => navigate(ROUTES.TASK_DETAIL.replace(':taskId', taskId)), [navigate])
+    const handleViewAllActivity = useCallback(() => navigate(ROUTES.ADMIN_REPORTS), [navigate])
 
     const userFirstName = useMemo(() => user?.displayName?.split(' ')[0] ?? 'Admin', [user?.displayName])
 
@@ -217,6 +218,7 @@ export function useAdminDashboard() {
             handleProjectSelect,
             handleTasksNavigate,
             handleTaskSelect,
+            handleViewAllActivity,
         },
         overdueCount: stats.overdueTasks,
     }

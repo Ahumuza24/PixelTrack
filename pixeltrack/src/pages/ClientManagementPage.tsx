@@ -1,13 +1,4 @@
-import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
-import { Building2 } from 'lucide-react'
-import {
-    Dialog,
-    DialogContent,
-    DialogDescription,
-    DialogHeader,
-    DialogTitle,
-} from '@/components/ui/dialog'
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import {
     AlertDialog,
     AlertDialogAction,
@@ -18,11 +9,12 @@ import {
     AlertDialogHeader,
     AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
-
-import { ClientList, ClientForm, useClients, useCreateClient, useUpdateClient, useDeleteClient } from '@/features/clients'
-import type { Client } from '@/types'
-import type { ClientFormValues } from '@/features/clients/schemas/clientSchema'
-import { ROUTES } from '@/lib/constants'
+import {
+    ClientList,
+    ClientForm,
+    ClientManagementHeader,
+    useClientManagement,
+} from '@/features/clients'
 
 /**
  * ClientManagementPage - Admin page for managing client companies.
@@ -38,98 +30,60 @@ import { ROUTES } from '@/lib/constants'
  * Access: Admin only (protected by RoleGuard)
  */
 export function ClientManagementPage() {
-    const { data: clients, isLoading, error, refetch } = useClients()
-    const createClient = useCreateClient()
-    const updateClient = useUpdateClient()
-    const deleteClient = useDeleteClient()
-    const navigate = useNavigate()
+    const {
+        clients,
+        isLoading,
+        error,
+        stats,
+        dialogState,
+        handlers,
+        mutationState,
+        refetch,
+    } = useClientManagement()
 
-    const [isFormOpen, setIsFormOpen] = useState(false)
-    const [editingClient, setEditingClient] = useState<Client | null>(null)
-    const [deletingClient, setDeletingClient] = useState<Client | null>(null)
-
-    const handleAdd = () => {
-        setEditingClient(null)
-        setIsFormOpen(true)
-    }
-
-    const handleEdit = (client: Client) => {
-        setEditingClient(client)
-        setIsFormOpen(true)
-    }
-
-    const handleDelete = (client: Client) => {
-        setDeletingClient(client)
-    }
-
-    const handleView = (client: Client) => {
-        navigate(ROUTES.ADMIN_CLIENT_DETAIL.replace(':clientId', client.id))
-    }
-
-    const handleFormSubmit = async (data: ClientFormValues) => {
-        if (editingClient) {
-            await updateClient.mutateAsync({
-                id: editingClient.id,
-                ...data,
-            })
-        } else {
-            await createClient.mutateAsync(data)
-        }
-        setIsFormOpen(false)
-        setEditingClient(null)
-    }
-
-    const handleConfirmDelete = async () => {
-        if (deletingClient) {
-            await deleteClient.mutateAsync(deletingClient.id)
-            setDeletingClient(null)
-        }
-    }
+    const { isFormOpen, editingClient, deletingClient } = dialogState
+    const {
+        openCreateDialog,
+        openEditDialog,
+        closeFormDialog,
+        submitClientForm,
+        requestDeleteClient,
+        cancelDeleteClient,
+        confirmDeleteClient,
+        handleViewClient,
+    } = handlers
+    const { isCreating, isUpdating, isDeleting } = mutationState
 
     return (
         <div className="min-h-screen bg-slate-50">
-            {/* Page Header */}
-            <div className="bg-white border-b border-slate-200 sticky top-0 z-10">
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                    <div className="flex items-center justify-between h-16">
-                        <div className="flex items-center gap-4">
-                            <div className="w-10 h-10 bg-cobalt rounded-xl flex items-center justify-center">
-                                <Building2 className="w-5 h-5 text-white" />
-                            </div>
-                            <div>
-                                <h1 className="text-xl font-bold text-slate-900">Client Management</h1>
-                                <p className="text-sm text-slate-500">
-                                    {clients?.length ?? 0} companies
-                                </p>
-                            </div>
-                        </div>
-                        
-                    </div>
-                </div>
-            </div>
+            <ClientManagementHeader
+                totalClients={stats.totalClients}
+                activeClients={stats.activeClients}
+                onCreate={openCreateDialog}
+                isCreating={isCreating}
+            />
 
             {/* Main Content */}
             <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
                 <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
                     <ClientList
-                        clients={clients ?? []}
+                        clients={clients}
                         isLoading={isLoading}
                         error={error}
                         onRetry={refetch}
-                        onEdit={handleEdit}
-                        onDelete={handleDelete}
-                        onView={handleView}
-                        onAdd={handleAdd}
+                        onEdit={openEditDialog}
+                        onDelete={requestDeleteClient}
+                        onView={handleViewClient}
+                        onAdd={openCreateDialog}
                     />
                 </div>
             </main>
 
             {/* Add/Edit Dialog */}
-            <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
+            <Dialog open={isFormOpen} onOpenChange={(open) => (open ? openCreateDialog() : closeFormDialog())}>
                 <DialogContent className="sm:max-w-lg">
                     <DialogHeader>
                         <DialogTitle className="flex items-center gap-2">
-                            <Building2 className="w-5 h-5 text-cobalt" />
                             {editingClient ? 'Edit Client' : 'Add New Client'}
                         </DialogTitle>
                         <DialogDescription>
@@ -140,15 +94,15 @@ export function ClientManagementPage() {
                     </DialogHeader>
                     <ClientForm
                         client={editingClient ?? undefined}
-                        onSubmit={handleFormSubmit}
-                        onCancel={() => setIsFormOpen(false)}
-                        isSubmitting={createClient.isPending || updateClient.isPending}
+                        onSubmit={submitClientForm}
+                        onCancel={closeFormDialog}
+                        isSubmitting={isCreating || isUpdating}
                     />
                 </DialogContent>
             </Dialog>
 
             {/* Delete Confirmation */}
-            <AlertDialog open={!!deletingClient} onOpenChange={() => setDeletingClient(null)}>
+            <AlertDialog open={!!deletingClient} onOpenChange={(open) => (!open ? cancelDeleteClient() : undefined)}>
                 <AlertDialogContent>
                     <AlertDialogHeader>
                         <AlertDialogTitle>Delete Client</AlertDialogTitle>
@@ -159,13 +113,13 @@ export function ClientManagementPage() {
                         </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
-                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogCancel onClick={cancelDeleteClient}>Cancel</AlertDialogCancel>
                         <AlertDialogAction
-                            onClick={handleConfirmDelete}
+                            onClick={confirmDeleteClient}
                             className="bg-red-600 hover:bg-red-700"
-                            disabled={deleteClient.isPending}
+                            disabled={isDeleting}
                         >
-                            {deleteClient.isPending ? 'Deleting...' : 'Delete'}
+                            {isDeleting ? 'Deleting...' : 'Delete'}
                         </AlertDialogAction>
                     </AlertDialogFooter>
                 </AlertDialogContent>

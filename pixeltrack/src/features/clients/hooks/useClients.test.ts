@@ -3,12 +3,12 @@ import { renderHook, waitFor } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import * as React from 'react'
 import { useClients, useClient, useCreateClient, useUpdateClient, useDeleteClient } from './useClients'
-import * as clientsApi from '@/lib/firebase/clients'
+import * as clientsApi from '@/lib/supabase/clients'
 import type { Client, CreateClientInput, UpdateClientInput } from '@/types'
 import { ClientStatus } from '@/types'
 
 // Mock the clients API
-vi.mock('@/lib/firebase/clients', () => ({
+vi.mock('@/lib/supabase/clients', () => ({
     getClients: vi.fn(),
     getClient: vi.fn(),
     createClient: vi.fn(),
