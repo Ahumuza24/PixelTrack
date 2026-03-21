@@ -60,3 +60,31 @@ export async function getRecentActivityNotifications(limit = 6): Promise<Notific
 
     return (data ?? []).map((row) => mapNotification(row as NotificationRow))
 }
+
+export async function markNotificationAsRead(notificationId: string): Promise<void> {
+    const { error } = await supabase
+        .from('notifications')
+        .update({ is_read: true, read_at: new Date().toISOString() })
+        .eq('id', notificationId)
+
+    if (error) {
+        throw error
+    }
+}
+
+export async function markAllNotificationsAsRead(): Promise<void> {
+    const { data: userData } = await supabase.auth.getUser()
+    if (!userData.user) {
+        throw new Error('Not authenticated')
+    }
+
+    const { error } = await supabase
+        .from('notifications')
+        .update({ is_read: true, read_at: new Date().toISOString() })
+        .eq('user_id', userData.user.id)
+        .eq('is_read', false)
+
+    if (error) {
+        throw error
+    }
+}

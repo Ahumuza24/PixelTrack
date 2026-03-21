@@ -1,6 +1,7 @@
-import { Loader2, Search, Bell, Plus, ArrowRight } from 'lucide-react'
+import { Loader2, Search, Plus, ArrowRight } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
+import { NotificationBell } from '@/components/NotificationBell'
 import { ADMIN_SEARCH_MIN_LENGTH } from '@/features/admin/hooks/useAdminSearch'
 import { SEARCH_TYPE_CONFIG } from '@/features/admin/constants/dashboard'
 import type { AdminDashboardSearchState } from '@/features/admin/hooks/useAdminDashboard'
@@ -108,14 +109,7 @@ export function AdminDashboardHeader({ searchState, overdueCount, onCreateProjec
                 </div>
             </div>
             <div className="flex items-center gap-3">
-                <button className="h-9 w-9 flex items-center justify-center rounded-lg hover:bg-muted/60 text-muted-foreground relative">
-                    <Bell className="w-5 h-5" />
-                    {overdueCount > 0 && (
-                        <span className="absolute top-0 right-0 h-4 w-4 bg-red-500 rounded-full text-[10px] text-white flex items-center justify-center">
-                            {overdueCount}
-                        </span>
-                    )}
-                </button>
+                <NotificationBell overdueCount={overdueCount} />
                 <Button onClick={onCreateProject}>
                     <Plus className="w-4 h-4 mr-2" />
                     New Project

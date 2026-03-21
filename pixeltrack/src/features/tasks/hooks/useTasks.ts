@@ -32,7 +32,9 @@ import {
     getTasksByAssignee,
     getTasksByClient,
 } from '@/lib/supabase/tasks'
+import { publishNotificationsSafe } from '@/lib/notifications/dispatcher'
 import type { TaskFilters, TaskStatus } from '@/types'
+import { TaskStatus as TaskStatusEnum } from '@/types'
 
 const TASKS_QUERY_KEY = 'tasks'
 
@@ -142,9 +144,28 @@ export function useCreateTask() {
 
     return useMutation({
         mutationFn: createTask,
-        onSuccess: () => {
+        onSuccess: (task) => {
             queryClient.invalidateQueries({ queryKey: [TASKS_QUERY_KEY] })
             toast.success('Task created successfully')
+
+            // Notify assignees when task is created with assignments
+            if (task.assignees && task.assignees.length > 0) {
+                const notifications = task.assignees.map((userId) => ({
+                    userId,
+                    type: 'task_assigned' as const,
+                    title: 'New task assigned to you',
+                    body: `"${task.title}" has been assigned to you`,
+                    actionUrl: `/tasks/${task.id}`,
+                    relatedEntityType: 'task',
+                    relatedEntityId: task.id,
+                    metadata: {
+                        taskId: task.id,
+                        taskTitle: task.title,
+                    },
+                    priority: (task.priority === 'high' ? 'high' : 'normal') as 'high' | 'normal',
+                }))
+                void publishNotificationsSafe(notifications, 'task creation')
+            }
         },
         onError: (error) => {
             toast.error(`Failed to create task: ${error.message}`)
@@ -229,13 +250,35 @@ export function useUpdateTaskStatus() {
     const queryClient = useQueryClient()
 
     return useMutation({
-        mutationFn: ({ taskId, status }: { taskId: string; status: TaskStatus }) =>
+        mutationFn: ({ taskId, status }: { taskId: string; status: TaskStatus; assignees?: string[]; title?: string }) =>
             updateTaskStatus(taskId, status),
         onSuccess: (_, variables) => {
             queryClient.invalidateQueries({ queryKey: [TASKS_QUERY_KEY] })
             queryClient.invalidateQueries({
                 queryKey: [TASKS_QUERY_KEY, variables.taskId],
             })
+
+            // Notify assignees of status change (especially completion)
+            if (variables.assignees && variables.assignees.length > 0 && variables.title) {
+                const isComplete = variables.status === TaskStatusEnum.COMPLETE
+                const notifications = variables.assignees.map((userId) => ({
+                    userId,
+                    type: 'task_status_updated' as const,
+                    title: isComplete ? 'Task completed' : 'Task status updated',
+                    body: isComplete
+                        ? `"${variables.title}" has been marked as complete`
+                        : `"${variables.title}" status changed to ${variables.status}`,
+                    actionUrl: `/tasks/${variables.taskId}`,
+                    relatedEntityType: 'task',
+                    relatedEntityId: variables.taskId,
+                    metadata: {
+                        taskId: variables.taskId,
+                        taskTitle: variables.title,
+                    },
+                    priority: 'normal' as const,
+                }))
+                void publishNotificationsSafe(notifications, 'task status update')
+            }
         },
         onError: (error) => {
             toast.error(`Failed to update status: ${error.message}`)

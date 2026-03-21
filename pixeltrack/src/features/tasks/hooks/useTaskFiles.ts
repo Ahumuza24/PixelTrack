@@ -8,6 +8,8 @@ import {
     createSignedTaskFileUrl,
     type UploadTaskFileInput,
 } from '@/lib/supabase/taskFiles'
+import { getTask } from '@/lib/supabase/tasks'
+import { publishNotificationsSafe } from '@/lib/notifications/dispatcher'
 
 const TASK_FILES_QUERY_KEY = 'task-files'
 const TASKS_QUERY_KEY = 'tasks'
@@ -31,17 +33,44 @@ export function useTaskFiles(taskId: string | null) {
 
 /**
  * Upload a new binary asset or external link for the given task.
+ * Notifies task assignees of the new file.
  */
 export function useUploadTaskFile() {
     const queryClient = useQueryClient()
 
     return useMutation({
         mutationFn: (input: UploadTaskFileInput) => uploadTaskFile(input),
-        onSuccess: (_, variables) => {
+        onSuccess: async (_file, variables) => {
             const taskId = variables.taskId
             queryClient.invalidateQueries({ queryKey: [TASK_FILES_QUERY_KEY, taskId] })
             queryClient.invalidateQueries({ queryKey: [TASKS_QUERY_KEY, taskId] })
             toast.success('File uploaded successfully')
+
+            // Notify task assignees of file upload
+            try {
+                const task = await getTask(taskId)
+                if (task && task.assignees && task.assignees.length > 0) {
+                    const fileName = 'file' in variables ? variables.file.name : variables.displayName
+                    const notifications = task.assignees.map((userId) => ({
+                        userId,
+                        type: 'file_uploaded' as const,
+                        title: 'New file uploaded',
+                        body: `File "${fileName}" uploaded to task "${task.title}"`,
+                        actionUrl: `/tasks/${taskId}`,
+                        relatedEntityType: 'task',
+                        relatedEntityId: taskId,
+                        metadata: {
+                            taskId: task.id,
+                            taskTitle: task.title,
+                            fileName: fileName,
+                        },
+                        priority: 'normal' as const,
+                    }))
+                    void publishNotificationsSafe(notifications, 'file upload')
+                }
+            } catch {
+                // Silently fail - notification failure shouldn't break file upload
+            }
         },
         onError: (error: Error) => {
             toast.error(`Failed to upload file: ${error.message}`)

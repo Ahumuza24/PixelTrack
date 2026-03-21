@@ -35,6 +35,8 @@ export interface TaskStatusDisplayConfig {
     dotClass: string
 }
 
+export const SUPABASE_FUNCTIONS_BASE_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1`
+
 /** Task status labels and colours for badge rendering */
 export const TASK_STATUS_CONFIG: Record<TaskStatus, TaskStatusDisplayConfig> = {
     not_started: {
