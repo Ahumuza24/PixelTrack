@@ -21,6 +21,7 @@ export const ROUTES = {
     TASK_DETAIL: '/tasks/:taskId',
     DESIGN_PREVIEW: '/tasks/:taskId/designs/:fileId',
     ANALYTICS: '/admin/analytics',
+    NOTIFICATIONS: '/notifications',
 } as const
 
 /** Routes accessible by each role after successful login */

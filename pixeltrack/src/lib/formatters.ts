@@ -1,3 +1,5 @@
+import { formatDistanceToNow } from 'date-fns'
+
 /**
  * Format file size in human-readable format
  */
@@ -33,4 +35,12 @@ export function formatDateTime(dateString: string | Date): string {
         hour: 'numeric',
         minute: '2-digit',
     })
+}
+
+/**
+ * Format date as relative time (e.g., "2 hours ago", "3 days ago")
+ */
+export function formatRelativeTime(dateString: string | Date): string {
+    const date = typeof dateString === 'string' ? new Date(dateString) : dateString
+    return formatDistanceToNow(date, { addSuffix: true })
 }

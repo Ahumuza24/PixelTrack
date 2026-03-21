@@ -20,6 +20,7 @@ import { AnalyticsPage } from '@/pages/AnalyticsPage'
 import { NotFoundPage } from '@/pages/NotFoundPage'
 import { UserSettingsPage } from '@/pages/UserSettingsPage'
 import { FilesPage } from '@/pages/FilesPage'
+import { NotificationsPage } from '@/pages/NotificationsPage'
 import { ROUTES } from '@/lib/constants'
 import { UserRole } from '@/types'
 
@@ -87,6 +88,7 @@ export const router = createBrowserRouter([
                 children: [
                     { path: ROUTES.TASK_DETAIL, element: <TaskDetailPage /> },
                     { path: ROUTES.DESIGN_PREVIEW, element: <AdminDashboardPage /> },
+                    { path: ROUTES.NOTIFICATIONS, element: <NotificationsPage /> },
                 ],
             },
         ],

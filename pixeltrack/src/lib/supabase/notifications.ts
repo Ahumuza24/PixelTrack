@@ -88,3 +88,46 @@ export async function markAllNotificationsAsRead(): Promise<void> {
         throw error
     }
 }
+
+interface GetNotificationsOptions {
+    limit?: number
+    unreadOnly?: boolean
+    type?: NotificationType | null
+}
+
+export async function getNotifications(options: GetNotificationsOptions = {}): Promise<Notification[]> {
+    const { data: userData } = await supabase.auth.getUser()
+    if (!userData.user) {
+        throw new Error('Not authenticated')
+    }
+
+    const { limit = 50, unreadOnly = false, type = null } = options
+
+    let query = supabase
+        .from('notifications')
+        .select(
+            'id,user_id,type,title,body,action_url,related_entity_type,related_entity_id,metadata,priority,is_read,read_at,created_at,updated_at'
+        )
+        .eq('user_id', userData.user.id)
+        .order('created_at', { ascending: false })
+
+    if (unreadOnly) {
+        query = query.eq('is_read', false)
+    }
+
+    if (type) {
+        query = query.eq('type', type)
+    }
+
+    if (limit) {
+        query = query.limit(limit)
+    }
+
+    const { data, error } = await query
+
+    if (error) {
+        throw error
+    }
+
+    return (data ?? []).map((row) => mapNotification(row as NotificationRow))
+}

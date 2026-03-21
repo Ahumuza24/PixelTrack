@@ -1,5 +1,3 @@
-import { useRef, useState } from 'react'
-import { formatDistanceToNow } from 'date-fns'
 import {
     UploadCloud,
     Link2,
@@ -14,80 +12,73 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Badge } from '@/components/ui/badge'
 import { cn } from '@/lib/utils'
+import { formatRelativeTime } from '@/lib/formatters'
 import type { TaskFile } from '@/types'
-import { UserRole } from '@/types'
-import { useUploadTaskFile, useDeleteTaskFile, useSignedTaskFileUrl } from '../hooks/useTaskFiles'
+import { useSignedTaskFileUrl } from '../hooks/useTaskFiles'
+import { IMAGE_MIME_TYPES, ACCEPTED_FILE_TYPES } from '@/features/tasks/constants/taskFiles'
+
+// ============================================================================
+// Types
+// ============================================================================
 
 interface TaskFilesSectionProps {
-    taskId: string
     files?: TaskFile[]
     isLoading: boolean
     canManageFiles: boolean
-    currentUserId: string | null
-    currentUserRole: UserRole
+    onUpload: (files: FileList | null) => void
+    onLinkSubmit: (name: string, url: string) => void
+    onDelete: (file: TaskFile) => void
+    onPreview: (file: TaskFile) => void
+    uploadInputRef: React.RefObject<HTMLInputElement | null>
+    isUploading: boolean
+    linkName: string
+    setLinkName: (value: string) => void
+    linkUrl: string
+    setLinkUrl: (value: string) => void
+    isDragging: boolean
+    setIsDragging: (value: boolean) => void
+    onDrop: (event: React.DragEvent<HTMLDivElement>) => void
+    canDelete: (file: TaskFile) => boolean
 }
 
-const IMAGE_MIME_TYPES = new Set(['image/png', 'image/jpeg', 'image/svg+xml'])
+interface TaskFileCardProps {
+    file: TaskFile
+    onPreview: () => void
+    onDelete: () => void
+    canDelete: boolean
+}
+
+interface FilePreviewDialogProps {
+    file: TaskFile | null
+    onClose: () => void
+}
+
+// ============================================================================
+// Components
+// ============================================================================
 
 export function TaskFilesSection({
-    taskId,
     files,
     isLoading,
     canManageFiles,
-    currentUserId,
-    currentUserRole,
+    onUpload,
+    onLinkSubmit,
+    onDelete,
+    onPreview,
+    uploadInputRef,
+    isUploading,
+    linkName,
+    setLinkName,
+    linkUrl,
+    setLinkUrl,
+    isDragging,
+    setIsDragging,
+    onDrop,
+    canDelete,
 }: TaskFilesSectionProps) {
-    const uploadInputRef = useRef<HTMLInputElement>(null)
-    const [isDragging, setIsDragging] = useState(false)
-    const [linkName, setLinkName] = useState('')
-    const [linkUrl, setLinkUrl] = useState('')
-    const [previewFile, setPreviewFile] = useState<TaskFile | null>(null)
-
-    const uploadMutation = useUploadTaskFile()
-    const deleteMutation = useDeleteTaskFile()
-
-    const canDelete = (file: TaskFile) => {
-        if (currentUserRole === UserRole.ADMIN) return true
-        if (currentUserRole === UserRole.EMPLOYEE && file.uploadedBy && file.uploadedBy === currentUserId) {
-            return true
-        }
-        return false
-    }
-
-    const handleFilesUpload = (selectedFiles: FileList | null) => {
-        if (!selectedFiles || uploadMutation.isPending) return
-        Array.from(selectedFiles).forEach((file) => {
-            uploadMutation.mutate({
-                taskId,
-                file,
-                uploadedBy: currentUserId ?? undefined,
-            })
-        })
-    }
-
-    const onDrop = (event: React.DragEvent<HTMLDivElement>) => {
-        event.preventDefault()
-        event.stopPropagation()
-        setIsDragging(false)
-        if (!canManageFiles) return
-        handleFilesUpload(event.dataTransfer.files)
-    }
-
     const handleLinkSubmit = (event: React.FormEvent) => {
         event.preventDefault()
-        if (!linkName.trim() || !linkUrl.trim()) return
-        uploadMutation.mutate({
-            taskId,
-            displayName: linkName.trim(),
-            externalUrl: linkUrl.trim(),
-            uploadedBy: currentUserId ?? undefined,
-        })
-        setLinkName('')
-        setLinkUrl('')
-    }
-
-    const handleDelete = (file: TaskFile) => {
-        deleteMutation.mutate({ taskFileId: file.id, taskId })
+        onLinkSubmit(linkName, linkUrl)
     }
 
     const renderEmptyState = () => (
@@ -128,7 +119,7 @@ export function TaskFilesSection({
                                     variant="default"
                                     size="sm"
                                     onClick={() => uploadInputRef.current?.click()}
-                                    disabled={uploadMutation.isPending}
+                                    disabled={isUploading}
                                 >
                                     Choose files
                                 </Button>
@@ -137,7 +128,7 @@ export function TaskFilesSection({
                                     variant="outline"
                                     size="sm"
                                     onClick={() => uploadInputRef.current?.click()}
-                                    disabled={uploadMutation.isPending}
+                                    disabled={isUploading}
                                 >
                                     Browse device
                                 </Button>
@@ -147,8 +138,8 @@ export function TaskFilesSection({
                                 type="file"
                                 className="hidden"
                                 multiple
-                                accept={Array.from(IMAGE_MIME_TYPES).concat('application/pdf').join(',')}
-                                onChange={(event) => handleFilesUpload(event.target.files)}
+                                accept={ACCEPTED_FILE_TYPES.join(',')}
+                                onChange={(event) => onUpload(event.target.files)}
                             />
                         </div>
                     </div>
@@ -168,7 +159,7 @@ export function TaskFilesSection({
                                 placeholder="e.g. Figma prototype"
                                 value={linkName}
                                 onChange={(event) => setLinkName(event.target.value)}
-                                disabled={uploadMutation.isPending}
+                                disabled={isUploading}
                                 required
                             />
                         </div>
@@ -180,11 +171,11 @@ export function TaskFilesSection({
                                 placeholder="https://..."
                                 value={linkUrl}
                                 onChange={(event) => setLinkUrl(event.target.value)}
-                                disabled={uploadMutation.isPending}
+                                disabled={isUploading}
                                 required
                             />
                         </div>
-                        <Button type="submit" className="w-full" disabled={uploadMutation.isPending}>
+                        <Button type="submit" className="w-full" disabled={isUploading}>
                             Save link
                         </Button>
                     </form>
@@ -214,8 +205,8 @@ export function TaskFilesSection({
                                 <TaskFileCard
                                     key={file.id}
                                     file={file}
-                                    onPreview={() => setPreviewFile(file)}
-                                    onDelete={() => handleDelete(file)}
+                                    onPreview={() => onPreview(file)}
+                                    onDelete={() => onDelete(file)}
                                     canDelete={canDelete(file)}
                                 />
                             ))}
@@ -223,31 +214,30 @@ export function TaskFilesSection({
                     )}
                 </div>
             </section>
-
-            <FilePreviewDialog
-                file={previewFile}
-                onClose={() => setPreviewFile(null)}
-            />
         </div>
     )
 }
 
-interface TaskFileCardProps {
-    file: TaskFile
-    onPreview: () => void
-    onDelete: () => void
-    canDelete: boolean
-}
-
 function TaskFileCard({ file, onPreview, onDelete, canDelete }: TaskFileCardProps) {
     const isImage = IMAGE_MIME_TYPES.has(file.fileType)
+    const { data: thumbnailUrl } = useSignedTaskFileUrl(
+        isImage && !file.isExternalLink ? file.fileUrl : null,
+        isImage && !file.isExternalLink
+    )
+
     return (
         <div className="rounded-xl border border-slate-200 p-4 flex flex-col gap-3">
             <div className="flex items-start justify-between gap-3">
                 <div className="flex items-start gap-3">
-                    <div className="w-12 h-12 rounded-lg bg-slate-100 flex items-center justify-center">
+                    <div className="w-12 h-12 rounded-lg bg-slate-100 flex items-center justify-center overflow-hidden flex-shrink-0">
                         {file.isExternalLink ? (
                             <ExternalLink className="w-5 h-5 text-slate-500" />
+                        ) : isImage && thumbnailUrl ? (
+                            <img
+                                src={thumbnailUrl}
+                                alt={file.fileName}
+                                className="w-full h-full object-cover"
+                            />
                         ) : isImage ? (
                             <ImageIcon className="w-5 h-5 text-slate-500" />
                         ) : (
@@ -255,9 +245,9 @@ function TaskFileCard({ file, onPreview, onDelete, canDelete }: TaskFileCardProp
                         )}
                     </div>
                     <div>
-                        <p className="font-semibold text-slate-900 break-words">{file.fileName}</p>
+                        <p className="font-semibold text-slate-900 truncate max-w-[100px]" title={file.fileName}>{file.fileName}</p>
                         <p className="text-xs text-slate-500">
-                            Uploaded {formatDistanceToNow(new Date(file.createdAt), { addSuffix: true })}
+                            Uploaded {formatRelativeTime(file.createdAt)}
                         </p>
                     </div>
                 </div>
@@ -300,12 +290,7 @@ function TaskFileCard({ file, onPreview, onDelete, canDelete }: TaskFileCardProp
     )
 }
 
-interface FilePreviewDialogProps {
-    file: TaskFile | null
-    onClose: () => void
-}
-
-function FilePreviewDialog({ file, onClose }: FilePreviewDialogProps) {
+export function FilePreviewDialog({ file, onClose }: FilePreviewDialogProps) {
     const isOpen = Boolean(file)
     const isImage = file ? IMAGE_MIME_TYPES.has(file.fileType) : false
 
@@ -328,7 +313,7 @@ function FilePreviewDialog({ file, onClose }: FilePreviewDialogProps) {
             <div className="w-full max-w-3xl rounded-2xl bg-white shadow-xl">
                 <header className="flex items-center justify-between border-b border-slate-100 px-6 py-4">
                     <div>
-                        <p className="font-semibold text-slate-900">{file.fileName}</p>
+                        <p className="font-semibold text-slate-900 truncate max-w-md">{file.fileName}</p>
                         <p className="text-xs text-slate-500">Version {file.version}</p>
                     </div>
                     <Button variant="ghost" onClick={onClose}>
@@ -370,3 +355,6 @@ function FilePreviewDialog({ file, onClose }: FilePreviewDialogProps) {
         </div>
     )
 }
+
+// Re-export for convenience
+export { IMAGE_MIME_TYPES } from '@/features/tasks/constants/taskFiles'

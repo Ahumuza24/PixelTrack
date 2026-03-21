@@ -14,7 +14,7 @@ interface FileWithClient extends TaskFile {
 }
 
 interface UseFilesReturn {
-    tasks: FileWithClient[]
+    files: FileWithClient[]
     isLoading: boolean
     searchQuery: string
     setSearchQuery: (query: string) => void
@@ -26,11 +26,11 @@ interface UseFilesReturn {
     setViewMode: (mode: 'list' | 'grid') => void
     selectedFile: FileWithClient | null
     handleDeleteFile: (fileId: string, taskId: string) => void
+    // Preview dialog state
+    previewFile: FileWithClient | null
+    setPreviewFile: (file: FileWithClient | null) => void
     handleViewFile: (file: FileWithClient) => void
-    viewingFile: FileWithClient | null
-    setViewingFile: (file: FileWithClient | null) => void
-    previewUrl: string | null
-    isPreviewLoading: boolean
+    handleClosePreview: () => void
 }
 
 const THUMBNAIL_QUERY_KEY = 'file-thumbnails'
@@ -87,7 +87,7 @@ export function useFiles(): UseFilesReturn {
     const [viewMode, setViewMode] = useState<'list' | 'grid'>('list')
     const [selectedFileId, setSelectedFileId] = useState<string | null>(null)
     const [filterType, setFilterType] = useState<FileFilterType | null>(null)
-    const [viewingFile, setViewingFile] = useState<FileWithClient | null>(null)
+    const [previewFile, setPreviewFile] = useState<FileWithClient | null>(null)
 
     const { data: rawTasks = [] } = useTasks()
     const { data: clients = [] } = useClients()
@@ -149,53 +149,6 @@ export function useFiles(): UseFilesReturn {
         [filteredFiles, selectedFileId]
     )
 
-    // Get signed URL for preview using useEffect for more control
-    const [previewUrl, setPreviewUrl] = useState<string | null>(null)
-    const [isPreviewLoading, setIsPreviewLoading] = useState(false)
-
-    useEffect(() => {
-        if (!viewingFile) {
-            setPreviewUrl(null)
-            setIsPreviewLoading(false)
-            return
-        }
-
-        // Handle external links immediately
-        if (viewingFile.isExternalLink) {
-            setPreviewUrl(viewingFile.externalUrl || null)
-            setIsPreviewLoading(false)
-            return
-        }
-
-        // Need to fetch signed URL
-        if (!viewingFile.fileUrl) {
-            setPreviewUrl(null)
-            setIsPreviewLoading(false)
-            return
-        }
-
-        let cancelled = false
-        setIsPreviewLoading(true)
-
-        createSignedTaskFileUrl(viewingFile.fileUrl, 60)
-            .then((url) => {
-                if (!cancelled) {
-                    setPreviewUrl(url)
-                    setIsPreviewLoading(false)
-                }
-            })
-            .catch(() => {
-                if (!cancelled) {
-                    setPreviewUrl(null)
-                    setIsPreviewLoading(false)
-                }
-            })
-
-        return () => {
-            cancelled = true
-        }
-    }, [viewingFile])
-
     const handleDeleteFile = useCallback(
         (fileId: string, taskId: string) => {
             if (confirm('Are you sure you want to delete this file?')) {
@@ -206,11 +159,15 @@ export function useFiles(): UseFilesReturn {
     )
 
     const handleViewFile = useCallback((file: FileWithClient) => {
-        setViewingFile(file)
-    }, [])
+        setPreviewFile(file)
+    }, [setPreviewFile])
+
+    const handleClosePreview = useCallback(() => {
+        setPreviewFile(null)
+    }, [setPreviewFile])
 
     return {
-        tasks: filteredFiles,
+        files: filteredFiles,
         isLoading: filesLoading,
         searchQuery,
         setSearchQuery,
@@ -222,10 +179,10 @@ export function useFiles(): UseFilesReturn {
         setViewMode,
         selectedFile,
         handleDeleteFile,
+        // Preview dialog state
+        previewFile,
+        setPreviewFile,
         handleViewFile,
-        viewingFile,
-        setViewingFile,
-        previewUrl: previewUrl || null,
-        isPreviewLoading,
+        handleClosePreview,
     }
 }

@@ -1,4 +1,3 @@
-import { useState } from 'react'
 import {
     Search,
     Upload,
@@ -7,8 +6,6 @@ import {
     List,
     LayoutGrid,
     ChevronRight,
-    ExternalLink,
-    FileText,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -22,124 +19,21 @@ import {
     TableHeader,
     TableRow,
 } from '@/components/ui/table'
-import { cn } from '@/lib/utils'
 import { FileRow } from '@/features/files/components/FileRow'
+import { FilePreviewDialog } from '@/features/files/components/FilePreviewDialog'
 import { DetailsPanel } from '@/features/files/components/DetailsPanel'
 import { useFiles } from '@/features/files/hooks/useFiles'
-import { useSignedTaskFileUrl } from '@/features/tasks/hooks/useTaskFiles'
 import { FileFilterType, FILE_TYPE_LABELS } from '@/features/files/constants'
-import type { TaskFile } from '@/types'
 
-interface FileWithClient extends TaskFile {
-    clientName?: string
-    clientId?: string
-    thumbnailUrl?: string | null
-}
-
-const IMAGE_MIME_TYPES = new Set(['image/png', 'image/jpeg', 'image/svg+xml'])
-
-interface FilePreviewDialogProps {
-    file: FileWithClient | null
-    onClose: () => void
-}
-
-function FilePreviewDialog({ file, onClose }: FilePreviewDialogProps) {
-    const isOpen = Boolean(file)
-    const isImage = file ? IMAGE_MIME_TYPES.has(file.fileType) || file.fileType.startsWith('image/') : false
-
-    const { data: signedUrl, isLoading } = useSignedTaskFileUrl(
-        file && !file.isExternalLink ? file.fileUrl : null,
-        isOpen && Boolean(file && !file.isExternalLink)
-    )
-
-    if (!file) return null
-
-    return (
-        <div
-            role="dialog"
-            aria-modal="true"
-            className={cn(
-                'fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-4 transition-opacity',
-                isOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
-            )}
-            onClick={onClose}
-        >
-            <div 
-                className="w-full max-w-5xl rounded-2xl bg-white shadow-2xl overflow-hidden"
-                onClick={(e) => e.stopPropagation()}
-            >
-                <header className="flex items-center justify-between border-b border-slate-100 px-6 py-4">
-                    <div>
-                        <p className="font-semibold text-slate-900 truncate max-w-md">{file.fileName}</p>
-                        <p className="text-xs text-slate-500">Version {file.version}</p>
-                    </div>
-                    <div className="flex items-center gap-2">
-                        {file.isExternalLink && file.externalUrl && (
-                            <Button asChild size="sm">
-                                <a href={file.externalUrl} target="_blank" rel="noreferrer">
-                                    <ExternalLink className="w-4 h-4 mr-1" />
-                                    Open
-                                </a>
-                            </Button>
-                        )}
-                        {!file.isExternalLink && signedUrl && (
-                            <Button asChild size="sm">
-                                <a href={signedUrl} target="_blank" rel="noreferrer">
-                                    <ExternalLink className="w-4 h-4 mr-1" />
-                                    Open
-                                </a>
-                            </Button>
-                        )}
-                        <Button variant="ghost" size="sm" onClick={onClose}>
-                            Close
-                        </Button>
-                    </div>
-                </header>
-                <div className="p-6 flex items-center justify-center bg-slate-50 min-h-[300px]">
-                    {file.isExternalLink && file.externalUrl ? (
-                        <div className="text-center space-y-3">
-                            <ExternalLink className="w-12 h-12 text-slate-400 mx-auto" />
-                            <p className="text-sm text-slate-600">
-                                This file is an external link.
-                            </p>
-                            <Button asChild>
-                                <a href={file.externalUrl} target="_blank" rel="noreferrer">
-                                    Open link
-                                </a>
-                            </Button>
-                        </div>
-                    ) : isLoading ? (
-                        <div className="flex flex-col items-center gap-3 text-slate-400">
-                            <div className="w-8 h-8 border-2 border-slate-300 border-t-slate-600 rounded-full animate-spin" />
-                            <p className="text-sm">Loading preview...</p>
-                        </div>
-                    ) : !signedUrl ? (
-                        <div className="text-center space-y-3">
-                            <FileText className="w-12 h-12 text-slate-400 mx-auto" />
-                            <p className="text-sm text-slate-600">Preview unavailable.</p>
-                        </div>
-                    ) : isImage ? (
-                        <img
-                            src={signedUrl}
-                            alt={file.fileName}
-                            className="max-h-[70vh] w-auto rounded-xl object-contain shadow-lg"
-                        />
-                    ) : (
-                        <iframe
-                            src={signedUrl}
-                            title={file.fileName}
-                            className="h-[70vh] w-full rounded-xl border border-slate-200"
-                        />
-                    )}
-                </div>
-            </div>
-        </div>
-    )
-}
-
+/**
+ * FilesPage - Presentational component for file management
+ * 
+ * All business logic is handled by useFiles hook.
+ * This component only handles rendering and user interaction callbacks.
+ */
 export function FilesPage() {
     const {
-        tasks,
+        files,
         isLoading,
         searchQuery,
         setSearchQuery,
@@ -147,21 +41,14 @@ export function FilesPage() {
         setFilterType,
         selectedFileId,
         setSelectedFileId,
+        selectedFile,
         viewMode,
         setViewMode,
-        selectedFile,
         handleDeleteFile,
+        previewFile,
+        handleViewFile,
+        handleClosePreview,
     } = useFiles()
-
-    const [previewFile, setPreviewFile] = useState<FileWithClient | null>(null)
-
-    const handleViewFile = (file: FileWithClient) => {
-        setPreviewFile(file)
-    }
-
-    const handleCloseView = () => {
-        setPreviewFile(null)
-    }
 
     const renderFilterBadge = (type: FileFilterType) => (
         <Badge
@@ -258,14 +145,14 @@ export function FilesPage() {
                                         Loading files...
                                     </TableCell>
                                 </TableRow>
-                            ) : tasks.length === 0 ? (
+                            ) : files.length === 0 ? (
                                 <TableRow>
                                     <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
                                         No files found
                                     </TableCell>
                                 </TableRow>
                             ) : (
-                                tasks.map((file) => (
+                                files.map((file) => (
                                     <FileRow
                                         key={file.id}
                                         file={file}
@@ -290,7 +177,7 @@ export function FilesPage() {
             {/* File Preview Dialog */}
             <FilePreviewDialog
                 file={previewFile}
-                onClose={handleCloseView}
+                onClose={handleClosePreview}
             />
         </div>
     )

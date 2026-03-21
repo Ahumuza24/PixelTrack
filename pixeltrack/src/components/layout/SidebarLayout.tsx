@@ -75,7 +75,7 @@ const navigation: NavItem[] = [
     },
     {
         label: 'Notifications',
-        path: ROUTES.ADMIN + '/notifications',
+        path: ROUTES.NOTIFICATIONS,
         icon: Bell,
         roles: [UserRole.ADMIN, UserRole.EMPLOYEE, UserRole.CLIENT],
     },
@@ -104,6 +104,12 @@ const navigation: NavItem[] = [
         roles: [UserRole.EMPLOYEE],
     },
     {
+        label: 'Notifications',
+        path: ROUTES.NOTIFICATIONS,
+        icon: Bell,
+        roles: [UserRole.EMPLOYEE],
+    },
+    {
         label: 'My Analytics',
         path: ROUTES.EMPLOYEE_ANALYTICS,
         icon: BarChart3,
@@ -113,6 +119,12 @@ const navigation: NavItem[] = [
         label: 'Client Home',
         path: ROUTES.CLIENT,
         icon: Building2,
+        roles: [UserRole.CLIENT],
+    },
+    {
+        label: 'Notifications',
+        path: ROUTES.NOTIFICATIONS,
+        icon: Bell,
         roles: [UserRole.CLIENT],
     },
     {

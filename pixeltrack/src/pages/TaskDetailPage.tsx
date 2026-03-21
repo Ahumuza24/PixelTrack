@@ -31,7 +31,8 @@ import {
     AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
 import { SidebarLayout } from '@/components/layout/SidebarLayout'
-import { TaskFilesSection } from '@/features/tasks/components/TaskFilesSection'
+import { TaskFilesSection, FilePreviewDialog } from '@/features/tasks/components/TaskFilesSection'
+import { useTaskFilesSection } from '@/features/tasks/hooks/useTaskFilesSection'
 import { TaskCommentsSection } from '@/features/tasks/components/TaskCommentsSection'
 import { TaskForm } from '@/features/tasks/components/TaskForm'
 import { TaskStatusBadge } from '@/components/status'
@@ -72,6 +73,29 @@ export function TaskDetailPage() {
         closeDeleteDialog,
     } = dialogState
     const { handleBack, handleEditSubmit, handleDeleteTask } = handlers
+
+    // TaskFilesSection hook
+    const {
+        isDragging,
+        setIsDragging,
+        linkName,
+        setLinkName,
+        linkUrl,
+        setLinkUrl,
+        uploadInputRef,
+        previewFile,
+        setPreviewFile,
+        isUploading,
+        handleFilesUpload,
+        handleLinkSubmit: handleTaskFilesLinkSubmit,
+        handleDelete: handleTaskFilesDelete,
+        canDelete: canDeleteTaskFile,
+        onDrop,
+    } = useTaskFilesSection({
+        taskId: taskId || '',
+        currentUserId: currentUser?.uid ?? null,
+        currentUserRole: currentUser?.role ?? UserRole.CLIENT,
+    })
 
     // Loading state
     if (isLoading) {
@@ -187,12 +211,27 @@ export function TaskDetailPage() {
                                     <Badge variant="secondary">{taskFiles?.length ?? 0} files</Badge>
                                 </div>
                                 <TaskFilesSection
-                                    taskId={task.id}
                                     files={taskFiles}
                                     isLoading={isTaskFilesLoading}
                                     canManageFiles={canManageFiles}
-                                    currentUserId={currentUser?.uid ?? null}
-                                    currentUserRole={currentUser?.role ?? UserRole.CLIENT}
+                                    onUpload={handleFilesUpload}
+                                    onLinkSubmit={handleTaskFilesLinkSubmit}
+                                    onDelete={handleTaskFilesDelete}
+                                    onPreview={(file) => setPreviewFile(file)}
+                                    uploadInputRef={uploadInputRef}
+                                    isUploading={isUploading}
+                                    linkName={linkName}
+                                    setLinkName={setLinkName}
+                                    linkUrl={linkUrl}
+                                    setLinkUrl={setLinkUrl}
+                                    isDragging={isDragging}
+                                    setIsDragging={setIsDragging}
+                                    onDrop={onDrop}
+                                    canDelete={canDeleteTaskFile}
+                                />
+                                <FilePreviewDialog
+                                    file={previewFile}
+                                    onClose={() => setPreviewFile(null)}
                                 />
                             </div>
 
