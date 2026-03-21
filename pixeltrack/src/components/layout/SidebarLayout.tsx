@@ -69,7 +69,7 @@ const navigation: NavItem[] = [
     },
     {
         label: 'Files',
-        path: ROUTES.ADMIN_REPORTS,
+        path: ROUTES.ADMIN_FILES,
         icon: FileText,
         roles: [UserRole.ADMIN],
     },

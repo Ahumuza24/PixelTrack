@@ -19,6 +19,7 @@ import { ProjectAnalyticsPage } from '@/pages/ProjectAnalyticsPage'
 import { AnalyticsPage } from '@/pages/AnalyticsPage'
 import { NotFoundPage } from '@/pages/NotFoundPage'
 import { UserSettingsPage } from '@/pages/UserSettingsPage'
+import { FilesPage } from '@/pages/FilesPage'
 import { ROUTES } from '@/lib/constants'
 import { UserRole } from '@/types'
 
@@ -54,6 +55,7 @@ export const router = createBrowserRouter([
                             { path: ROUTES.ADMIN_TASKS, element: <TaskManagementPage /> },
                             { path: ROUTES.ADMIN_SETTINGS, element: <UserSettingsPage /> },
                             { path: ROUTES.ADMIN_REPORTS, element: <AdminDashboardPage /> },
+                            { path: ROUTES.ADMIN_FILES, element: <FilesPage /> },
                             { path: ROUTES.ANALYTICS, element: <AnalyticsPage /> },
                             { path: ROUTES.PROJECT_ANALYTICS, element: <ProjectAnalyticsPage /> },
                         ],

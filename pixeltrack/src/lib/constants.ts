@@ -15,6 +15,7 @@ export const ROUTES = {
     ADMIN_TASKS: '/admin/tasks',
     ADMIN_SETTINGS: '/admin/settings',
     ADMIN_REPORTS: '/admin/reports',
+    ADMIN_FILES: '/admin/files',
     PROJECT_ANALYTICS: '/admin/analytics/projects',
     CLIENT_REPORTS: '/client/reports',
     TASK_DETAIL: '/tasks/:taskId',
