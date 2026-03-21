@@ -1,4 +1,4 @@
-import { Link, X, Clock, Send, Check, History } from 'lucide-react'
+import { Link, X, Clock, Send, Check, History, Eye } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent } from '@/components/ui/card'
@@ -6,9 +6,15 @@ import { FILE_ICONS, FILE_COLORS } from '@/features/files/constants'
 import { formatDateTime, formatShortDate } from '@/lib/formatters'
 import type { TaskFile } from '@/types'
 
+interface FileWithThumbnail extends TaskFile {
+    thumbnailUrl?: string | null
+    clientName?: string
+}
+
 interface DetailsPanelProps {
-    file: TaskFile | null
+    file: FileWithThumbnail | null
     onClose: () => void
+    onView?: () => void
 }
 
 function EmptyDetailsPanel() {
@@ -76,14 +82,59 @@ function CommentsSection() {
     )
 }
 
-export function DetailsPanel({ file, onClose }: DetailsPanelProps) {
+function FileThumbnail({ file, colorClass, bgClass, onClick }: { 
+    file: FileWithThumbnail
+    colorClass: string
+    bgClass: string
+    onClick?: () => void
+}) {
+    const isImage = file.fileType.startsWith('image/')
+    const Icon = file.isExternalLink
+        ? Link
+        : FILE_ICONS[file.fileType] || FILE_ICONS.default
+
+    // Show actual image thumbnail if available
+    if (isImage && file.thumbnailUrl) {
+        return (
+            <div 
+                className={`aspect-video flex items-center justify-center ${bgClass} relative group cursor-pointer overflow-hidden rounded-lg`}
+                onClick={onClick}
+            >
+                <img
+                    src={file.thumbnailUrl}
+                    alt={file.fileName}
+                    className="h-full w-full object-cover transition-transform group-hover:scale-105"
+                    loading="lazy"
+                    onError={(e) => {
+                        const target = e.target as HTMLImageElement
+                        target.style.display = 'none'
+                    }}
+                />
+                {onClick && (
+                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                        <Eye className="h-8 w-8 text-white" />
+                    </div>
+                )}
+            </div>
+        )
+    }
+
+    // Show icon for non-images or images without thumbnail
+    return (
+        <div 
+            className={`aspect-video flex items-center justify-center ${bgClass} ${onClick ? 'cursor-pointer hover:opacity-80 transition-opacity' : ''}`}
+            onClick={onClick}
+        >
+            <Icon className={`h-16 w-16 ${colorClass} opacity-20`} />
+        </div>
+    )
+}
+
+export function DetailsPanel({ file, onClose, onView }: DetailsPanelProps) {
     if (!file) {
         return <EmptyDetailsPanel />
     }
 
-    const Icon = file.isExternalLink
-        ? Link
-        : FILE_ICONS[file.fileType] || FILE_ICONS.default
     const colorClass = file.isExternalLink
         ? FILE_COLORS['external-link']
         : FILE_COLORS[file.fileType] || FILE_COLORS.default
@@ -101,9 +152,12 @@ export function DetailsPanel({ file, onClose }: DetailsPanelProps) {
             <div className="p-4">
                 <Card>
                     <CardContent className="p-0">
-                        <div className={`aspect-video flex items-center justify-center ${bgClass}`}>
-                            <Icon className={`h-16 w-16 ${colorClass} opacity-20`} />
-                        </div>
+                        <FileThumbnail 
+                            file={file} 
+                            colorClass={colorClass} 
+                            bgClass={bgClass}
+                            onClick={onView}
+                        />
                         <div className="p-4">
                             <p className="text-sm font-semibold truncate">{file.fileName}</p>
                             <div className="flex items-center gap-1 mt-1 text-muted-foreground">
@@ -112,6 +166,12 @@ export function DetailsPanel({ file, onClose }: DetailsPanelProps) {
                                     Uploaded {formatShortDate(file.createdAt)}
                                 </span>
                             </div>
+                            {file.clientName && (
+                                <div className="mt-2 pt-2 border-t">
+                                    <span className="text-xs text-muted-foreground">Client: </span>
+                                    <span className="text-xs font-medium">{file.clientName}</span>
+                                </div>
+                            )}
                         </div>
                     </CardContent>
                 </Card>
