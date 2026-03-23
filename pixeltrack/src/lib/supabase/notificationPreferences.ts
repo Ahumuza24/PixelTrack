@@ -6,8 +6,7 @@ import type {
     QuietHoursWindow,
 } from '@/types'
 
-const NOTIFICATION_COLUMNS =
-    'user_id,in_app_enabled,email_enabled,task_assignments,status_updates,comments,files,annotations,reports,digest_frequency,quiet_hours,channel_preferences,created_at,updated_at'
+const NOTIFICATION_COLUMNS = '*'
 
 const DEFAULT_QUIET_HOURS: QuietHoursWindow = {
     start: '22:00',
@@ -50,9 +49,10 @@ interface NotificationPreferencesRow {
 function mergeChannelPreferences(
     stored?: NotificationChannelPreferenceMap | null,
 ): NotificationChannelPreferenceMap {
-    const merged = cloneChannelPreferences(DEFAULT_NOTIFICATION_CHANNEL_PREFERENCES)
+    const merged: NotificationChannelPreferenceMap = cloneChannelPreferences(DEFAULT_NOTIFICATION_CHANNEL_PREFERENCES)
 
-    (Object.keys(merged) as NotificationChannelId[]).forEach((key) => {
+    const keys = Object.keys(merged) as NotificationChannelId[]
+    keys.forEach((key: NotificationChannelId) => {
         if (stored?.[key]) {
             merged[key] = {
                 email: stored[key].email,
@@ -104,24 +104,29 @@ function createDefaultPreferences(userId: string): NotificationPreferences {
 }
 
 export async function getNotificationPreferences(userId: string): Promise<NotificationPreferences> {
-    const { data, error } = await supabase
-        .from('notification_preferences')
-        .select(NOTIFICATION_COLUMNS)
-        .eq('user_id', userId)
-        .single()
+    try {
+        const { data, error } = await supabase
+            .from('notification_preferences')
+            .select(NOTIFICATION_COLUMNS)
+            .eq('user_id', userId)
+            .maybeSingle()
 
-    if (error) {
-        if (error.code === 'PGRST116') {
+        if (error) {
+            // Log but don't throw - return defaults on any error
+            console.warn('Notification preferences fetch error:', error.message)
             return createDefaultPreferences(userId)
         }
-        throw error
-    }
 
-    if (!data) {
+        if (!data) {
+            return createDefaultPreferences(userId)
+        }
+
+        return mapPreferencesRow(data as NotificationPreferencesRow)
+    } catch (err) {
+        // Handle any unexpected errors gracefully
+        console.warn('Notification preferences fetch failed:', err)
         return createDefaultPreferences(userId)
     }
-
-    return mapPreferencesRow(data as NotificationPreferencesRow)
 }
 
 export type NotificationPreferencesUpdate = Partial<

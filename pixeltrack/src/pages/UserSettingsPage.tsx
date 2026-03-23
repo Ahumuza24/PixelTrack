@@ -2,7 +2,6 @@ import { Camera, Trash2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
-import { Textarea } from '@/components/ui/textarea'
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar'
 import { Switch } from '@/components/ui/switch'
 import { useUserSettingsPage } from '@/features/settings/hooks/useUserSettingsPage'
@@ -48,7 +47,6 @@ export function UserSettingsPage() {
 
     const {
         preferences: channelPreferences,
-        error: notificationError,
         isDisabled: isNotificationDisabled,
         isSaving: notificationSaving,
         onToggle: handleNotificationToggle,
@@ -113,31 +111,11 @@ export function UserSettingsPage() {
                             </div>
                         </div>
 
-                        <div className="grid gap-4 md:grid-cols-2">
-                            <div className="space-y-2">
-                                <label className="text-sm font-medium text-muted-foreground">Job Title</label>
-                                <Input
-                                    value={profileForm.jobTitle}
-                                    onChange={(e) => handleProfileChange('jobTitle', e.target.value)}
-                                    disabled={isProfileDisabled}
-                                />
-                            </div>
-                            <div className="space-y-2">
-                                <label className="text-sm font-medium text-muted-foreground">Location</label>
-                                <Input
-                                    value={profileForm.location}
-                                    onChange={(e) => handleProfileChange('location', e.target.value)}
-                                    disabled={isProfileDisabled}
-                                />
-                            </div>
-                        </div>
-
                         <div className="space-y-2">
-                            <label className="text-sm font-medium text-muted-foreground">Bio</label>
-                            <Textarea
-                                rows={4}
-                                value={profileForm.bio}
-                                onChange={(e) => handleProfileChange('bio', e.target.value)}
+                            <label className="text-sm font-medium text-muted-foreground">Job Title</label>
+                            <Input
+                                value={profileForm.jobTitle}
+                                onChange={(e) => handleProfileChange('jobTitle', e.target.value)}
                                 disabled={isProfileDisabled}
                             />
                         </div>
@@ -158,7 +136,6 @@ export function UserSettingsPage() {
                     <CardHeader className="pb-4">
                         <CardTitle className="text-lg text-foreground">Notification Preferences</CardTitle>
                         <p className="text-sm text-muted-foreground">Decide how Pixel Track keeps you in the loop.</p>
-                        {notificationError && <p className="text-sm text-destructive">Unable to load notification preferences.</p>}
                     </CardHeader>
                     <CardContent className="space-y-4">
                         <div className="text-xs uppercase text-muted-foreground grid grid-cols-5 gap-3 border-b border-border pb-2">

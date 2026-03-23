@@ -68,6 +68,7 @@ export function useNotificationPreferencesSettings() {
         },
         enabled: !!user?.uid,
         staleTime: 1000 * 60 * 5,
+        retry: false, // Don't retry on failure - defaults are returned
     })
 }
 
@@ -87,7 +88,7 @@ export function useUpdateNotificationPreferences() {
 
             await upsertNotificationPreferences(user.uid, input)
         },
-        onSuccess: async (_, __, context) => {
+        onSuccess: async () => {
             if (user?.uid) {
                 await queryClient.invalidateQueries({ queryKey: [...NOTIFICATION_PREFS_QUERY_KEY, user.uid] })
             }

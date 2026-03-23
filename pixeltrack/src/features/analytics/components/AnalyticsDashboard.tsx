@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { BarChart3, FileText, Download, Layers, Clock, ListChecks } from 'lucide-react'
+import { BarChart3, FileText, Download, Layers, Clock, ListChecks, TrendingUp } from 'lucide-react'
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -13,6 +13,12 @@ import { UserRole, type AnalyticsDatePreset, type AnalyticsDateRange } from '@/t
 import { useEmployeeAnalytics, useProjectAnalytics, useClientReport } from '../hooks/useAnalytics'
 import { useAnalyticsRealtime } from '../hooks/useAnalyticsRealtime'
 import { exportClientReportToPdf, exportClientReportToCsv } from '../utils/exportReport'
+import {
+    TaskStatusChart,
+    ProjectProgressChart,
+    WorkloadDistributionChart,
+    CompletionTrendChart,
+} from '../components/charts'
 
 const DATE_PRESETS: AnalyticsDatePreset[] = ['daily', 'weekly', 'monthly', 'custom']
 
@@ -254,6 +260,42 @@ export function AnalyticsDashboard() {
                         </Card>
                     </div>
 
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <Card>
+                            <CardHeader>
+                                <CardTitle className="flex items-center gap-2 text-base">
+                                    <BarChart3 className="w-4 h-4" />
+                                    Task Status Distribution
+                                </CardTitle>
+                            </CardHeader>
+                            <CardContent>
+                                <TaskStatusChart
+                                    assigned={employeeData?.totals.assigned ?? 0}
+                                    completed={employeeData?.totals.completed ?? 0}
+                                    inProgress={employeeData?.totals.inProgress ?? 0}
+                                    overdue={employeeData?.totals.overdue ?? 0}
+                                />
+                            </CardContent>
+                        </Card>
+
+                        <Card>
+                            <CardHeader>
+                                <CardTitle className="flex items-center gap-2 text-base">
+                                    <TrendingUp className="w-4 h-4" />
+                                    Completion Trend (30 days)
+                                </CardTitle>
+                            </CardHeader>
+                            <CardContent>
+                                <CompletionTrendChart
+                                    tasks={employeeData?.tasks.map((t) => ({
+                                        updatedAt: t.task.updatedAt,
+                                        status: t.task.status,
+                                    })) ?? []}
+                                />
+                            </CardContent>
+                        </Card>
+                    </div>
+
                     <Card>
                         <CardHeader>
                             <CardTitle>Task Breakdown</CardTitle>
@@ -329,7 +371,68 @@ export function AnalyticsDashboard() {
                         </Card>
                     </div>
 
-                    <Card>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <Card>
+                            <CardHeader>
+                                <CardTitle className="flex items-center gap-2 text-base">
+                                    <BarChart3 className="w-4 h-4" />
+                                    Task Status Overview
+                                </CardTitle>
+                            </CardHeader>
+                            <CardContent>
+                                <TaskStatusChart
+                                    assigned={projectData?.totals.tasks ?? 0}
+                                    completed={projectData?.totals.completed ?? 0}
+                                    inProgress={projectData?.totals.inProgress ?? 0}
+                                    overdue={projectData?.totals.overdue ?? 0}
+                                />
+                            </CardContent>
+                        </Card>
+
+                        <Card>
+                            <CardHeader>
+                                <CardTitle className="flex items-center gap-2 text-base">
+                                    <Layers className="w-4 h-4" />
+                                    Team Workload
+                                </CardTitle>
+                            </CardHeader>
+                            <CardContent>
+                                <WorkloadDistributionChart
+                                    assignees={projectData?.assigneeLoad.map((entry) => ({
+                                        assigneeId: entry.assigneeId,
+                                        taskCount: entry.taskCount,
+                                        completedCount: 0,
+                                        inProgressCount: 0,
+                                    })) ?? []}
+                                />
+                            </CardContent>
+                        </Card>
+
+                        <Card>
+                            <CardHeader>
+                                <CardTitle className="flex items-center gap-2 text-base">
+                                    <TrendingUp className="w-4 h-4" />
+                                    Project Progress
+                                </CardTitle>
+                            </CardHeader>
+                            <CardContent>
+                                <ProjectProgressChart
+                                    projects={
+                                        projectData?.project
+                                            ? [
+                                                  {
+                                                      project: projectData.project,
+                                                      progressPercent: projectData.progressPercent,
+                                                      totals: projectData.totals,
+                                                  },
+                                              ]
+                                            : []
+                                    }
+                                />
+                            </CardContent>
+                        </Card>
+
+                        <Card>
                         <CardHeader>
                             <CardTitle>Progress &amp; Team Load</CardTitle>
                         </CardHeader>
@@ -367,6 +470,7 @@ export function AnalyticsDashboard() {
                             )}
                         </CardContent>
                     </Card>
+                    </div>
                 </section>
 
                 <section className="space-y-4">
