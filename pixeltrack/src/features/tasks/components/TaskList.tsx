@@ -19,7 +19,7 @@
  * ```
  */
 
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
     Search,
@@ -30,6 +30,8 @@ import {
     Users,
     Building2,
     CheckSquare,
+    FileText,
+    Download,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -48,13 +50,15 @@ import {
     TableHeader,
     TableRow,
 } from '@/components/ui/table'
-import type { Task, TaskStatus, TaskPriority, Client, UserProfile } from '@/types'
+import type { Task, TaskStatus, TaskPriority, Client, UserProfile, TaskFile } from '@/types'
 import { TaskStatus as TaskStatusConst, TaskPriority as TaskPriorityConst } from '@/types'
+import { createSignedTaskFileUrl } from '@/lib/supabase/taskFiles'
 
 interface TaskListProps {
     tasks: Task[]
     clients?: Client[]
     employees?: UserProfile[]
+    taskFiles?: Map<string, TaskFile[]>
     isLoading?: boolean
     error?: Error | null
     onRetry?: () => void
@@ -97,6 +101,7 @@ export function TaskList({
     tasks,
     clients = [],
     employees = [],
+    taskFiles = new Map(),
     isLoading = false,
     error = null,
     onRetry,
@@ -122,7 +127,26 @@ export function TaskList({
         return map
     }, [employees])
 
-    // Filter tasks
+    // File download handler
+    const handleFileDownload = useCallback(async (file: TaskFile) => {
+        try {
+            let downloadUrl: string | null = null
+            if (file.isExternalLink && file.externalUrl) {
+                downloadUrl = file.externalUrl
+            } else if (file.fileUrl) {
+                downloadUrl = file.fileUrl
+            } else {
+                const path = `tasks/${file.taskId}/${file.fileName}`
+                downloadUrl = await createSignedTaskFileUrl(path)
+            }
+            if (downloadUrl) {
+                window.open(downloadUrl, '_blank')
+            }
+        } catch (error) {
+            console.error('Failed to download file:', error)
+        }
+    }, [])
+
     const filteredTasks = useMemo(() => {
         return tasks.filter((task) => {
             // Search filter
@@ -267,6 +291,7 @@ export function TaskList({
                                 <TableHead>Client</TableHead>
                                 <TableHead>Assignees</TableHead>
                                 <TableHead>Due Date</TableHead>
+                                <TableHead>Files</TableHead>
                                 <TableHead className="w-10" />
                             </TableRow>
                         </TableHeader>
@@ -277,6 +302,7 @@ export function TaskList({
                                     .map((id) => employeeMap.get(id)?.displayName)
                                     .filter(Boolean)
                                     .slice(0, 2)
+                                const taskFilesList = taskFiles.get(task.id) || []
 
                                 return (
                                     <TableRow
@@ -326,6 +352,42 @@ export function TaskList({
                                                 <Calendar className="w-4 h-4 text-slate-400" />
                                                 {new Date(task.dueDate).toLocaleDateString()}
                                             </div>
+                                        </TableCell>
+                                        <TableCell>
+                                            {taskFilesList.length > 0 ? (
+                                                <div className="flex items-center gap-1">
+                                                    <FileText className="w-4 h-4 text-slate-400" />
+                                                    <span className="text-sm text-slate-600">{taskFilesList.length}</span>
+                                                    <DropdownMenu>
+                                                        <DropdownMenuTrigger asChild>
+                                                            <Button
+                                                                variant="ghost"
+                                                                size="sm"
+                                                                className="h-6 w-6 p-0 ml-1"
+                                                                onClick={(e) => e.stopPropagation()}
+                                                            >
+                                                                <Download className="h-3 w-3" />
+                                                            </Button>
+                                                        </DropdownMenuTrigger>
+                                                        <DropdownMenuContent align="end">
+                                                            {taskFilesList.map((file) => (
+                                                                <DropdownMenuItem
+                                                                    key={file.id}
+                                                                    onClick={(e) => {
+                                                                        e.stopPropagation()
+                                                                        void handleFileDownload(file)
+                                                                    }}
+                                                                >
+                                                                    <FileText className="w-4 h-4 mr-2" />
+                                                                    <span className="truncate max-w-[200px]">{file.fileName}</span>
+                                                                </DropdownMenuItem>
+                                                            ))}
+                                                        </DropdownMenuContent>
+                                                    </DropdownMenu>
+                                                </div>
+                                            ) : (
+                                                <span className="text-sm text-slate-400">-</span>
+                                            )}
                                         </TableCell>
                                         <TableCell>
                                             <DropdownMenu>

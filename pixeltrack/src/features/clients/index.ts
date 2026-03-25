@@ -13,5 +13,8 @@ export { useClients, useClient, useCreateClient, useUpdateClient, useDeleteClien
 export { useClientManagement } from './hooks/useClientManagement'
 export { useClientDetail } from './hooks/useClientDetail'
 export { useClientDashboard } from './hooks/useClientDashboard'
+export { useClientProjects } from './hooks/useClientProjects'
+export { useClientTasks } from './hooks/useClientTasks'
+export { useClientFiles } from './hooks/useClientFiles'
 export { clientSchema, defaultClientValues } from './schemas/clientSchema'
 export type { ClientFormValues } from './schemas/clientSchema'

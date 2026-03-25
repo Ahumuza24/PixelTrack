@@ -28,9 +28,6 @@ interface UseProjectAnalyticsOptions extends BaseRangeOptions {
     projectId: string | null
 }
 
-interface UseClientReportOptions extends BaseRangeOptions {
-    clientId: string | null
-}
 
 function useResolvedRange(preset: AnalyticsDatePreset = 'monthly', customRange?: AnalyticsDateRange) {
     return useMemo(() => resolveAnalyticsRange(preset, customRange), [preset, customRange])
@@ -98,20 +95,21 @@ export function useProjectAnalytics(options: UseProjectAnalyticsOptions) {
     })
 }
 
-export function useClientReport(options: UseClientReportOptions) {
-    const range = useResolvedRange(options.preset, options.customRange)
+export function useClientReport(options: { clientId: string | null; from: string; to: string }) {
+    const { clientId, from, to } = options
+    const range: AnalyticsDateRange = { from, to }
 
     return useQuery<ClientReportData>({
         queryKey: [
             ANALYTICS_QUERY_KEY,
             'client-report',
-            options.clientId,
+            clientId,
             range.from,
             range.to,
         ],
         queryFn: () =>
-            options.clientId
-                ? getClientReport({ clientId: options.clientId, range })
+            clientId
+                ? getClientReport({ clientId, range })
                 : Promise.resolve({
                       client: null,
                       range,
@@ -122,7 +120,7 @@ export function useClientReport(options: UseClientReportOptions) {
                       deliverables: [],
                       feedback: [],
                   }),
-        enabled: Boolean(options.clientId),
+        enabled: Boolean(clientId),
         staleTime: 1000 * 60 * 2,
     })
 }

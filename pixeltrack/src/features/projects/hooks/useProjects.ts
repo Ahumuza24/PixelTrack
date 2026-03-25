@@ -78,6 +78,15 @@ export function useProject(projectId: string | null) {
     })
 }
 
+export function useProjectsByClient(clientId: string | null) {
+    return useQuery({
+        queryKey: [PROJECTS_QUERY_KEY, 'client', clientId],
+        queryFn: () => (clientId ? getProjects({ clientId }) : []),
+        enabled: !!clientId,
+        staleTime: 1000 * 60 * 5,
+    })
+}
+
 /**
  * Hook to create a new project.
  * Invalidates projects cache on success.

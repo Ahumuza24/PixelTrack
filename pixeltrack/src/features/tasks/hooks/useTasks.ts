@@ -120,6 +120,21 @@ export function useTasksByClient(clientId: string | null) {
 }
 
 /**
+ * Hook to fetch tasks that belong to a specific project.
+ *
+ * @param projectId - The project ID to filter by
+ * @returns Query result with filtered tasks
+ */
+export function useTasksByProject(projectId: string | null) {
+    return useQuery({
+        queryKey: [TASKS_QUERY_KEY, 'project', projectId],
+        queryFn: () => (projectId ? getTasks({ projectId }) : []),
+        enabled: !!projectId,
+        staleTime: 1000 * 60 * 5,
+    })
+}
+
+/**
  * Hook to create a new task.
  * Invalidates tasks cache on success.
  *

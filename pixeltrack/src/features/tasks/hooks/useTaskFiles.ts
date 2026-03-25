@@ -23,10 +23,11 @@ interface DeleteTaskFileInput {
  * Load all files that belong to a specific task.
  */
 export function useTaskFiles(taskId: string | null) {
+    const hasValidTaskId = Boolean(taskId && taskId.length > 0)
     return useQuery<TaskFile[]>({
         queryKey: [TASK_FILES_QUERY_KEY, taskId],
-        queryFn: () => (taskId ? listTaskFiles(taskId) : []),
-        enabled: Boolean(taskId),
+        queryFn: () => (hasValidTaskId ? listTaskFiles(taskId as string) : []),
+        enabled: hasValidTaskId,
         staleTime: 1000 * 60,
     })
 }

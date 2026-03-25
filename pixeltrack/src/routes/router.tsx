@@ -14,6 +14,10 @@ import { TaskDetailPage } from '@/pages/TaskDetailPage'
 import { EmployeeDashboardPage } from '@/pages/EmployeeDashboardPage'
 import { EmployeeAnalyticsPage } from '@/pages/EmployeeAnalyticsPage'
 import { ClientDashboardPage } from '@/pages/ClientDashboardPage'
+import { ClientProjectsPage } from '@/pages/ClientProjectsPage'
+import { ClientProjectDetailPage } from '@/pages/ClientProjectDetailPage'
+import { ClientTasksPage } from '@/pages/ClientTasksPage'
+import { ClientFilesPage } from '@/pages/ClientFilesPage'
 import { ClientReportsPage } from '@/pages/ClientReportsPage'
 import { ProjectAnalyticsPage } from '@/pages/ProjectAnalyticsPage'
 import { AnalyticsPage } from '@/pages/AnalyticsPage'
@@ -68,8 +72,13 @@ export const router = createBrowserRouter([
             {
                 element: <RoleGuard allowedRoles={[UserRole.EMPLOYEE]} />,
                 children: [
-                    { path: ROUTES.DASHBOARD, element: <EmployeeDashboardPage /> },
-                    { path: ROUTES.EMPLOYEE_ANALYTICS, element: <EmployeeAnalyticsPage /> },
+                    {
+                        element: <SidebarLayout><Outlet /></SidebarLayout>,
+                        children: [
+                            { path: ROUTES.DASHBOARD, element: <EmployeeDashboardPage /> },
+                            { path: ROUTES.EMPLOYEE_ANALYTICS, element: <EmployeeAnalyticsPage /> },
+                        ],
+                    },
                 ],
             },
 
@@ -77,8 +86,17 @@ export const router = createBrowserRouter([
             {
                 element: <RoleGuard allowedRoles={[UserRole.CLIENT]} />,
                 children: [
-                    { path: ROUTES.CLIENT, element: <ClientDashboardPage /> },
-                    { path: ROUTES.CLIENT_REPORTS, element: <ClientReportsPage /> },
+                    {
+                        element: <SidebarLayout><Outlet /></SidebarLayout>,
+                        children: [
+                            { path: ROUTES.CLIENT, element: <ClientDashboardPage /> },
+                            { path: ROUTES.CLIENT_PROJECTS, element: <ClientProjectsPage /> },
+                            { path: ROUTES.CLIENT_PROJECT_DETAIL, element: <ClientProjectDetailPage /> },
+                            { path: ROUTES.CLIENT_TASKS, element: <ClientTasksPage /> },
+                            { path: ROUTES.CLIENT_FILES, element: <ClientFilesPage /> },
+                            { path: ROUTES.CLIENT_REPORTS, element: <ClientReportsPage /> },
+                        ],
+                    },
                 ],
             },
 
@@ -86,9 +104,14 @@ export const router = createBrowserRouter([
             {
                 element: <RoleGuard allowedRoles={[UserRole.ADMIN, UserRole.EMPLOYEE, UserRole.CLIENT]} />,
                 children: [
-                    { path: ROUTES.TASK_DETAIL, element: <TaskDetailPage /> },
-                    { path: ROUTES.DESIGN_PREVIEW, element: <AdminDashboardPage /> },
-                    { path: ROUTES.NOTIFICATIONS, element: <NotificationsPage /> },
+                    {
+                        element: <SidebarLayout><Outlet /></SidebarLayout>,
+                        children: [
+                            { path: ROUTES.TASK_DETAIL, element: <TaskDetailPage /> },
+                            { path: ROUTES.DESIGN_PREVIEW, element: <AdminDashboardPage /> },
+                            { path: ROUTES.NOTIFICATIONS, element: <NotificationsPage /> },
+                        ],
+                    },
                 ],
             },
         ],
